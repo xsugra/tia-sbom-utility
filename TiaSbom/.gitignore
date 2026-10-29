@@ -1,0 +1,29 @@
+# Build output
+bin/
+obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+*.addin
+*.log
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.rsuser
+
+# NuGet
+packages/
+*.nupkg
+
+# Secrets and local configuration — never commit tokens
+config.json
+token.bin
+*.pfx
+*.p12
+
+# Test output (real project data)
+sbom*.json

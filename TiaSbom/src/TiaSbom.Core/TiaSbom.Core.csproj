@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- No TIA dependency and no NuGet dependencies: must load inside the TIA Portal process (Add-In). -->
+</Project>
