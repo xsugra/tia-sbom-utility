@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Framework assemblies only: must load inside the TIA Portal process (Add-In). -->
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web.Extensions" />
+    <ProjectReference Include="..\TiaSbom.Core\TiaSbom.Core.csproj" />
+  </ItemGroup>
+</Project>

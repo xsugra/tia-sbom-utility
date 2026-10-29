@@ -1,0 +1,8 @@
+{
+  "BaseUrl": "https://gitea.company.local",
+  "Owner": "sbom",
+  "Branch": "main",
+  "PrivateRepos": false,
+  "TimeoutSeconds": 60,
+  "Token": ""
+}

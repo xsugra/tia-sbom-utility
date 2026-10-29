@@ -1,0 +1,13 @@
+# Build output, IDE, secrets: see TiaSbom/.gitignore
+
+# Test SBOMs exported from real (customer) projects
+sbom*.json
+
+# Transfer / helper files from the VM setup
+*.zip
+publisher-help.txt
+addin-dlls.txt
+
+# Siemens files copied from the TIA installation (proprietary, not ours to redistribute)
+Siemens.*.xsd
+Siemens.*.dll

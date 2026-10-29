@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <UseTiaOpenness>true</UseTiaOpenness>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TiaSbom.Core\TiaSbom.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <Company>YourCompany</Company>
+    <Version>0.1.0</Version>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- TIA Portal V21 Openness assemblies (modular since V21). Override: dotnet build -p:TiaApiDir=... -->
+    <TiaApiDir Condition="'$(TiaApiDir)' == ''">C:\Program Files\Siemens\Automation\Portal V21\PublicAPI\V21\net48</TiaApiDir>
+  </PropertyGroup>
+
+  <!-- Projects that set UseTiaOpenness=true reference all Siemens.Engineering.*.dll, never copied to output. -->
+  <ItemGroup Condition="'$(UseTiaOpenness)' == 'true'">
+    <Reference Include="$(TiaApiDir)\Siemens.Engineering*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
