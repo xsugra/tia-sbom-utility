@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Validated against PublicAPI\V21\Siemens.Engineering.AddIn.Publisher.xsd.
+  Paths are relative to this file — run the publisher from bin\Release\net48:
+    "C:\Program Files\Siemens\Automation\Portal V21\PublicAPI\V21\Siemens.Engineering.AddIn.Publisher.exe" -f AddInPublisherConfig.xml -o TiaSbom.addin -c
+-->
+<PackageConfiguration xmlns="http://www.siemens.com/automation/Openness/AddIn/Publisher/V21">
+  <Author>YourCompany - Automation Tools</Author>
+  <Description>Exports a CycloneDX SBOM (hardware + firmware) of the open project and commits it to Gitea.</Description>
+  <Product>
+    <Name>TiaSbom</Name>
+    <Id>TiaSbom</Id>
+    <Version>0.1.0</Version>
+  </Product>
+  <FeatureAssembly>
+    <AssemblyInfo>
+      <Assembly>TiaSbom.AddIn.dll</Assembly>
+    </AssemblyInfo>
+  </FeatureAssembly>
+  <AdditionalAssemblies>
+    <AssemblyInfo><Assembly>TiaSbom.Core.dll</Assembly></AssemblyInfo>
+    <AssemblyInfo><Assembly>TiaSbom.Tia.dll</Assembly></AssemblyInfo>
+    <AssemblyInfo><Assembly>TiaSbom.Gitea.dll</Assembly></AssemblyInfo>
+    <!-- No NuGet dependencies on purpose: the Add-In has no binding redirects inside the TIA process. -->
+  </AdditionalAssemblies>
+  <RequiredPermissions>
+    <TIAPermissions>
+      <TIA.ReadOnly />
+    </TIAPermissions>
+    <!--
+      Unrestricted for now: DPAPI (ProtectedData) needs DataProtectionPermission, which the V21 schema does not offer.
+      TODO: tighten to SecurityPermissions (FileIO, Web, UI, ProcessStart, UnmanagedCode) once a sandboxed run is verified.
+    -->
+    <UnrestrictedPermissions>
+      <System.UnrestrictedAccess>
+        <JustificationComment>Needs DPAPI token storage and HTTPS upload of the SBOM to the company Gitea server.</JustificationComment>
+      </System.UnrestrictedAccess>
+    </UnrestrictedPermissions>
+  </RequiredPermissions>
+</PackageConfiguration>

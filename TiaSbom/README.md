@@ -12,8 +12,30 @@ Jedno kliknutie v TIA Portali → CycloneDX 1.6 SBOM (HW + firmvér + použitý 
 | `TiaSbom.Cli` | `tiasbom.exe` – ladenie, CI, hromadné spracovanie | áno |
 | `TiaSbom.AddIn` | kontextové menu v TIA (pre bežných používateľov) | áno |
 
-.NET Framework 4.8 (požiadavka Openness V21). **Žiadne NuGet závislosti** – add-in beží v procese TIA
+.NET Framework podľa verzie Openness. **Žiadne NuGet závislosti** – add-in beží v procese TIA
 bez binding redirectov, cudzie knižnice (System.Text.Json, CycloneDX.Core) sa tam nenačítajú.
+
+## Podporované verzie TIA Portal
+
+Jeden zdrojový kód, jeden build na každé Openness API:
+
+| Build (`-Api`) | Beží na TIA | .NET Framework |
+|---|---|---|
+| `V16` | V16 – V19 | 4.6.2 |
+| `V17` | V17 – V20 | 4.8 |
+| `V21` | iba V21 | 4.8 |
+
+```powershell
+.\build.ps1 -Api V17
+.\build.ps1 -Api V21 -AddIn
+```
+
+- `build.ps1` berie DLL z `Portal <Portal>\PublicAPI\<Api>`. Na stroji bez danej verzie TIA použite napr. `-Api V17 -Portal V19`.
+- `tiasbom.exe` nájde správnu inštaláciu v registri podľa prípony projektu, bežiaceho TIA alebo `--portal Vxx`.
+- SBOM uvádza skutočnú verziu TIA z prípony projektu (`tia:version`) a API buildu (`tia:opennessApi`).
+- Starší projekt sa neotvára cez `OpenWithUpgrade`, lebo vytvára povýšenú kópiu. Projekt sa spracuje vo svojej verzii TIA.
+- `Device.UnpluggedItems` je zatiaľ zapnuté len vo V21. V ostatných buildoch je v SBOM `tia:unpluggedItemsRead = false`.
+- Add-in je overený len na V21. Staršie verzie potrebujú overiť API aj XSD publishera z `PublicAPI\<Api>`.
 
 ## Projektový kľúč = Gitea repozitár
 

@@ -37,7 +37,9 @@ namespace TiaSbom.Cli
                 : FromFile(Value(args, "--project"), Value(args, "--archive"));
 
             Console.WriteLine($"Collected {snapshot.Items.Count} device items and {snapshot.UsedProducts.Count} used products " +
-                              $"from '{snapshot.ProjectName}' (Family: '{snapshot.Family}').");
+                              $"from '{snapshot.ProjectName}' (TIA {snapshot.TiaVersion}, Openness API {TiaBuild.Api}, Family: '{snapshot.Family}').");
+            if (!snapshot.UnpluggedItemsRead)
+                Console.Error.WriteLine($"WARNING: Openness API {TiaBuild.Api} build does not read unplugged modules.");
             string json = SbomBuilder.ToJson(SbomBuilder.Build(snapshot));
 
             if (outFile != null)
@@ -91,6 +93,7 @@ namespace TiaSbom.Cli
                 }
                 else
                 {
+                    // Never OpenWithUpgrade: it creates an upgraded copy, so the SBOM would not describe the delivered project.
                     project = portal.Projects.Open(new FileInfo(projectPath));
                 }
 
@@ -103,11 +106,11 @@ namespace TiaSbom.Cli
         {
             // TIA shows an Openness firewall prompt on first attach — expected.
             var process = TiaPortal.GetProcesses().FirstOrDefault()
-                ?? throw new InvalidOperationException("No running TIA Portal V21 found.");
+                ?? throw new InvalidOperationException("No running TIA Portal found. Note: TIA and tiasbom must run with the same rights.");
 
             using (TiaPortal portal = process.Attach())
             {
-                Project project = portal.Projects.FirstOrDefault()
+                var project = HardwareCollector.FindOpenProject(portal)
                     ?? throw new InvalidOperationException("TIA Portal has no open project.");
                 return HardwareCollector.Collect(project); // do not close — the user owns this project
             }
@@ -136,7 +139,7 @@ namespace TiaSbom.Cli
 
         private static void PrintUsage() => Console.WriteLine(
 @"tiasbom --project <file.ap21> | --archive <file.zap21> | --attach
-        [--out <sbom.json>] [--upload [--key <project key>] [--force]] [--config <config.json>]
+        [--portal Vxx] [--out <sbom.json>] [--upload [--key <project key>] [--force]] [--config <config.json>]
 tiasbom --login");
     }
 }
