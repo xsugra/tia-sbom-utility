@@ -49,7 +49,7 @@ namespace TiaSbom.Core
                 { "components", snapshot.UsedProducts
                     .Select(ToSoftwareComponent)
                     .Concat(snapshot.Items
-                        .Where(i => !string.IsNullOrWhiteSpace(i.OrderNumber))
+                        .Where(i => i.IsProduct)
                         .Select(ToComponent))
                     .ToList() },
             };

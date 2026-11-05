@@ -1,6 +1,7 @@
 using System;
+using System.ComponentModel;
 using System.IO;
-using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace TiaSbom.Gitea
@@ -8,9 +9,12 @@ namespace TiaSbom.Gitea
     /// <summary>
     /// Per-user Gitea token, encrypted with Windows DPAPI (CurrentUser scope) in %APPDATA%\TiaSbom\token.bin.
     /// Only the same Windows user on the same machine can decrypt it.
+    /// Calls crypt32 directly: ProtectedData needs DataProtectionPermission, which the V17 Add-In sandbox cannot request.
+    /// The blob format is the same, so tokens saved with ProtectedData stay readable.
     /// </summary>
     public static class TokenStore
     {
+        private const int CryptProtectUiForbidden = 1;
         private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("TiaSbom.Gitea.v1");
 
         private static string FilePath =>
@@ -22,23 +26,70 @@ namespace TiaSbom.Gitea
             if (!File.Exists(FilePath)) return false;
             try
             {
-                var plain = ProtectedData.Unprotect(File.ReadAllBytes(FilePath), Entropy, DataProtectionScope.CurrentUser);
-                token = Encoding.UTF8.GetString(plain);
+                token = Encoding.UTF8.GetString(Unprotect(File.ReadAllBytes(FilePath)));
                 return token.Length > 0;
             }
-            catch (CryptographicException) { return false; } // profile moved / corrupted -> ask again
+            catch (Win32Exception) { return false; } // profile moved / corrupted -> ask again
         }
 
         public static void Save(string token)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-            var cipher = ProtectedData.Protect(Encoding.UTF8.GetBytes(token), Entropy, DataProtectionScope.CurrentUser);
-            File.WriteAllBytes(FilePath, cipher);
+            File.WriteAllBytes(FilePath, Protect(Encoding.UTF8.GetBytes(token)));
         }
 
         public static void Clear()
         {
             if (File.Exists(FilePath)) File.Delete(FilePath);
         }
+
+        private static byte[] Protect(byte[] data) => Transform(data, protect: true);
+
+        private static byte[] Unprotect(byte[] data) => Transform(data, protect: false);
+
+        private static byte[] Transform(byte[] data, bool protect)
+        {
+            GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+            GCHandle entropyHandle = GCHandle.Alloc(Entropy, GCHandleType.Pinned);
+            var output = new DataBlob();
+            try
+            {
+                var input = new DataBlob { Size = data.Length, Data = dataHandle.AddrOfPinnedObject() };
+                var entropy = new DataBlob { Size = Entropy.Length, Data = entropyHandle.AddrOfPinnedObject() };
+
+                bool ok = protect
+                    ? CryptProtectData(ref input, null, ref entropy, IntPtr.Zero, IntPtr.Zero, CryptProtectUiForbidden, ref output)
+                    : CryptUnprotectData(ref input, IntPtr.Zero, ref entropy, IntPtr.Zero, IntPtr.Zero, CryptProtectUiForbidden, ref output);
+                if (!ok) throw new Win32Exception(Marshal.GetLastWin32Error());
+
+                var result = new byte[output.Size];
+                Marshal.Copy(output.Data, result, 0, output.Size);
+                return result;
+            }
+            finally
+            {
+                dataHandle.Free();
+                entropyHandle.Free();
+                if (output.Data != IntPtr.Zero) LocalFree(output.Data);
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct DataBlob
+        {
+            public int Size;
+            public IntPtr Data;
+        }
+
+        [DllImport("crypt32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool CryptProtectData(ref DataBlob dataIn, string description, ref DataBlob entropy,
+            IntPtr reserved, IntPtr prompt, int flags, ref DataBlob dataOut);
+
+        [DllImport("crypt32.dll", SetLastError = true)]
+        private static extern bool CryptUnprotectData(ref DataBlob dataIn, IntPtr description, ref DataBlob entropy,
+            IntPtr reserved, IntPtr prompt, int flags, ref DataBlob dataOut);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr LocalFree(IntPtr memory);
     }
 }

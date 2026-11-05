@@ -3,8 +3,9 @@
     <UseTiaOpenness>true</UseTiaOpenness>
   </PropertyGroup>
   <ItemGroup>
-    <!-- TODO(V21): verify where Siemens.Engineering.AddIn*.dll lives in V21. If it is not in $(TiaApiDir),
-         add an explicit <Reference> here with <Private>false</Private>. -->
+    <Reference Include="$(TiaAddInApiDir)\Siemens.Engineering.AddIn*.dll" Condition="'$(TiaApi)' != 'V21'">
+      <Private>false</Private>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
     <ProjectReference Include="..\TiaSbom.Core\TiaSbom.Core.csproj" />
@@ -12,6 +13,6 @@
     <ProjectReference Include="..\TiaSbom.Gitea\TiaSbom.Gitea.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="AddInPublisherConfig.xml" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="AddInPublisherConfig.*.xml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TiaSbom.Core
 {
@@ -16,6 +17,14 @@ namespace TiaSbom.Core
         public string FirmwareVersion { get; set; }
         public bool IsGsd { get; set; }
         public bool IsPlugged { get; set; }
+
+        /// <summary>
+        /// False for items without a real product identity, e.g. the S7-1200 rack: order number "Rack",
+        /// type "System:Rack.S71200". System items with a real order number (SCALANCE) are products.
+        /// </summary>
+        public bool IsProduct =>
+            !string.IsNullOrWhiteSpace(OrderNumber) &&
+            (TypeIdentifier == null || !TypeIdentifier.StartsWith("System:") || OrderNumber.Any(char.IsDigit));
     }
 
     /// <summary>Engineering software used by the project (Project.UsedProducts), e.g. "STEP 7 Professional" V21.</summary>

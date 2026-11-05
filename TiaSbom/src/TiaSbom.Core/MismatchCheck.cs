@@ -27,7 +27,7 @@ namespace TiaSbom.Core
 
         public static HashSet<string> Fingerprints(ProjectSnapshot s) =>
             new HashSet<string>(
-                s.Items.Where(i => !string.IsNullOrWhiteSpace(i.OrderNumber)).Select(i => Fingerprint(i.Station, i.OrderNumber)),
+                s.Items.Where(i => i.IsProduct).Select(i => Fingerprint(i.Station, i.OrderNumber)),
                 StringComparer.OrdinalIgnoreCase);
 
         public static string Fingerprint(string station, string orderNumber) => (station ?? "") + "|" + (orderNumber ?? "");

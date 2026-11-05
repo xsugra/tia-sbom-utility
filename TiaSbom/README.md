@@ -34,8 +34,9 @@ Jeden zdrojový kód, jeden build na každé Openness API:
 - `tiasbom.exe` nájde správnu inštaláciu v registri podľa prípony projektu, bežiaceho TIA alebo `--portal Vxx`.
 - SBOM uvádza skutočnú verziu TIA z prípony projektu (`tia:version`) a API buildu (`tia:opennessApi`).
 - Starší projekt sa neotvára cez `OpenWithUpgrade`, lebo vytvára povýšenú kópiu. Projekt sa spracuje vo svojej verzii TIA.
-- `Device.UnpluggedItems` je zatiaľ zapnuté len vo V21. V ostatných buildoch je v SBOM `tia:unpluggedItemsRead = false`.
-- Add-in je overený len na V21. Staršie verzie potrebujú overiť API aj XSD publishera z `PublicAPI\<Api>`.
+- `Device.UnpluggedItems` je overené vo V17 aj V21. Build V16 ho zatiaľ nečíta, v SBOM má `tia:unpluggedItemsRead = false`.
+- Add-in má konfiguráciu pre každé API: `AddInPublisherConfig.<Api>.xml`. Do V20 je jeho API a publisher v `PublicAPI\<Api>.AddIn`.
+- V17 nemá `UnrestrictedPermissions`, add-in tam beží v sandboxe s explicitnými oprávneniami. V21 je overený, V17 sa testuje.
 
 ## Projektový kľúč = Gitea repozitár
 
@@ -80,9 +81,9 @@ Po skončení zákazky repozitár v Gitea *Archive* → read-only, dohľadateľn
    tiasbom --attach --out sbom.json
    tiasbom --attach --upload --key 24337
    ```
-6. **Add-In** – v `src\TiaSbom.AddIn\bin\Release\net48`:
+6. **Add-In**:
    ```
-   "C:\Program Files\Siemens\Automation\Portal V21\PublicAPI\V21\Siemens.Engineering.AddIn.Publisher.exe" -f AddInPublisherConfig.xml -o TiaSbom.addin -c
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Api V17 -AddIn
    ```
    Test: `%APPDATA%\Siemens\Automation\Portal V21\UserAddIns`.
    Firma: `C:\ProgramData\Siemens\Automation\Portal V21\CorporateAddIns` (IT), podpísať firemným certifikátom.

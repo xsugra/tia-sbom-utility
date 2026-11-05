@@ -29,11 +29,15 @@
     <TiaApiDir Condition="'$(TiaApiDir)' == '' And '$(TiaApi)' == 'V21'">C:\Program Files\Siemens\Automation\Portal $(TiaPortal)\PublicAPI\$(TiaApi)\net48</TiaApiDir>
     <TiaApiDir Condition="'$(TiaApiDir)' == ''">C:\Program Files\Siemens\Automation\Portal $(TiaPortal)\PublicAPI\$(TiaApi)</TiaApiDir>
 
+    <!-- Before V21 the Add-In API lives next to the Openness API in a separate folder, e.g. PublicAPI\V17.AddIn. -->
+    <TiaAddInApiDir Condition="'$(TiaApi)' == 'V21'">$(TiaApiDir)</TiaAddInApiDir>
+    <TiaAddInApiDir Condition="'$(TiaApi)' != 'V21'">C:\Program Files\Siemens\Automation\Portal $(TiaPortal)\PublicAPI\$(TiaApi).AddIn</TiaAddInApiDir>
+
     <DefineConstants>$(DefineConstants);TIA_API_$(TiaApi)</DefineConstants>
     <!-- Multiuser sessions (LocalSessions, ProjectBase) are available from Openness V17. -->
     <DefineConstants Condition="'$(TiaApi)' != 'V16'">$(DefineConstants);TIA_HAS_SESSIONS</DefineConstants>
-    <!-- Device.UnpluggedItems is documented from V19; enable for a lower API only after a successful compile. -->
-    <DefineConstants Condition="'$(TiaApi)' == 'V21'">$(DefineConstants);TIA_HAS_UNPLUGGED_ITEMS</DefineConstants>
+    <!-- Device.UnpluggedItems is documented from V19, but the V17 assembly has it too. V16 is not verified yet. -->
+    <DefineConstants Condition="'$(TiaApi)' != 'V16'">$(DefineConstants);TIA_HAS_UNPLUGGED_ITEMS</DefineConstants>
   </PropertyGroup>
 
   <!-- Projects that set UseTiaOpenness=true reference all Siemens.Engineering.*.dll, never copied to output. -->
