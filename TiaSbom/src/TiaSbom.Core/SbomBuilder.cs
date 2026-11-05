@@ -35,6 +35,8 @@ namespace TiaSbom.Core
                                 { "properties", new List<object>
                                     {
                                         Prop("tia:version", snapshot.TiaVersion),
+                                        Prop("tia:opennessApi", TiaBuild.Api),
+                                        Prop("tia:unpluggedItemsRead", snapshot.UnpluggedItemsRead ? "true" : "false"),
                                         Prop("tia:family", snapshot.Family),
                                         Prop("tia:projectPath", snapshot.ProjectPath),
                                         Prop("tia:exportedBy", snapshot.ExportedBy),

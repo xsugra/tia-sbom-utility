@@ -32,7 +32,10 @@ namespace TiaSbom.Core
         public string ProjectPath { get; set; }
         /// <summary>Project property "Family" — the stable project key (= Gitea repository name). May be empty.</summary>
         public string Family { get; set; }
-        public string TiaVersion { get; set; } = "V21";
+        /// <summary>TIA Portal version of the project, not the Openness API version — see <see cref="TiaBuild"/>.</summary>
+        public string TiaVersion { get; set; } = SbomBuilder.Unknown;
+        /// <summary>False when this API cannot read unplugged modules, so the SBOM may be incomplete for them.</summary>
+        public bool UnpluggedItemsRead { get; set; }
         public string ExportedBy { get; set; } = Environment.UserName;
         public DateTime ExportedAtUtc { get; set; } = DateTime.UtcNow;
         public List<HwItem> Items { get; } = new List<HwItem>();
