@@ -91,7 +91,7 @@ namespace TiaSbom.Core
                     {
                         { "type", "firmware" },
                         { "bom-ref", "fw:" + item.Path },
-                        { "name", (item.TypeName ?? item.Name) + " firmware" },
+                        { "name", item.ProductName + " firmware" },
                         { "version", item.FirmwareVersion },
                         // TODO: map OrderNumber -> CPE (e.g. cpe:2.3:o:siemens:simatic_s7-1500_cpu_firmware:...) via a lookup table.
                     },
@@ -107,7 +107,7 @@ namespace TiaSbom.Core
                 { "type", "device" },
                 { "bom-ref", "hw:" + item.Path },
                 { "supplier", new JsonObject { { "name", Supplier(item) } } },
-                { "name", item.TypeName ?? item.Name },
+                { "name", item.ProductName },
                 { "description", item.Name },
                 { "properties", properties },
                 { "components", firmware },

@@ -25,6 +25,12 @@ namespace TiaSbom.Core
         public bool IsProduct =>
             !string.IsNullOrWhiteSpace(OrderNumber) &&
             (TypeIdentifier == null || !TypeIdentifier.StartsWith("System:") || OrderNumber.Any(char.IsDigit));
+
+        /// <summary>HMI panels report no TypeName, and their item name ("HMI_1") says nothing about the product.</summary>
+        public string ProductName =>
+            !string.IsNullOrWhiteSpace(TypeName) ? TypeName
+            : !string.IsNullOrWhiteSpace(OrderNumber) ? OrderNumber
+            : Name;
     }
 
     /// <summary>
