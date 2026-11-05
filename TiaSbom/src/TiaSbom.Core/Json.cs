@@ -24,13 +24,16 @@ namespace TiaSbom.Core
     }
 
     /// <summary>
-    /// Minimal JSON writer with no external dependencies.
+    /// Minimal JSON writer and parser with no external dependencies.
     /// The Add-In runs inside the TIA Portal process without binding redirects, so System.Text.Json
     /// (and CycloneDX.Core, which depends on it) fail with "type initializer ... threw an exception".
     /// Supports JsonObject, IEnumerable (arrays), string, bool, int, long.
     /// </summary>
     public static class Json
     {
+        /// <summary>Returns Dictionary&lt;string, object&gt;, List&lt;object&gt;, string, double, bool or null.</summary>
+        public static object Parse(string text) => new JsonReader(text).ReadDocument();
+
         public static string Serialize(object value)
         {
             var sb = new StringBuilder();
