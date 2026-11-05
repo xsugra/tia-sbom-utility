@@ -20,6 +20,7 @@ namespace TiaSbom.Gitea
     public static class TokenStore
     {
         private const int CryptProtectUiForbidden = 1;
+        private const int LocalAllocFixed = 0;
         private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("TiaSbom.Gitea.v1");
 
         private static string FilePath =>
@@ -54,29 +55,38 @@ namespace TiaSbom.Gitea
 
         private static byte[] Transform(byte[] data, bool protect)
         {
-            GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            GCHandle entropyHandle = GCHandle.Alloc(Entropy, GCHandleType.Pinned);
+            // Marshal and GCHandle are security-critical, the sandbox rejects them. Native memory is used instead.
+            IntPtr dataCopy = ToNative(data);
+            IntPtr entropyCopy = ToNative(Entropy);
             var output = new DataBlob();
             try
             {
-                var input = new DataBlob { Size = data.Length, Data = dataHandle.AddrOfPinnedObject() };
-                var entropy = new DataBlob { Size = Entropy.Length, Data = entropyHandle.AddrOfPinnedObject() };
+                var input = new DataBlob { Size = data.Length, Data = dataCopy };
+                var entropy = new DataBlob { Size = Entropy.Length, Data = entropyCopy };
 
                 bool ok = protect
                     ? CryptProtectData(ref input, null, ref entropy, IntPtr.Zero, IntPtr.Zero, CryptProtectUiForbidden, ref output)
                     : CryptUnprotectData(ref input, IntPtr.Zero, ref entropy, IntPtr.Zero, IntPtr.Zero, CryptProtectUiForbidden, ref output);
-                if (!ok) throw new Win32Exception(Marshal.GetLastWin32Error());
+                if (!ok) throw new Win32Exception();
 
                 var result = new byte[output.Size];
-                Marshal.Copy(output.Data, result, 0, output.Size);
+                CopyFromNative(result, output.Data, (UIntPtr)output.Size);
                 return result;
             }
             finally
             {
-                dataHandle.Free();
-                entropyHandle.Free();
+                LocalFree(dataCopy);
+                LocalFree(entropyCopy);
                 if (output.Data != IntPtr.Zero) LocalFree(output.Data);
             }
+        }
+
+        private static IntPtr ToNative(byte[] data)
+        {
+            IntPtr memory = LocalAlloc(LocalAllocFixed, (UIntPtr)Math.Max(data.Length, 1));
+            if (memory == IntPtr.Zero) throw new Win32Exception();
+            CopyToNative(memory, data, (UIntPtr)data.Length);
+            return memory;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -94,7 +104,16 @@ namespace TiaSbom.Gitea
         private static extern bool CryptUnprotectData(ref DataBlob dataIn, IntPtr description, ref DataBlob entropy,
             IntPtr reserved, IntPtr prompt, int flags, ref DataBlob dataOut);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr LocalAlloc(int flags, UIntPtr bytes);
+
         [DllImport("kernel32.dll")]
         private static extern IntPtr LocalFree(IntPtr memory);
+
+        [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
+        private static extern void CopyToNative(IntPtr destination, byte[] source, UIntPtr bytes);
+
+        [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
+        private static extern void CopyFromNative(byte[] destination, IntPtr source, UIntPtr bytes);
     }
 }

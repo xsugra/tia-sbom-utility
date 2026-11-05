@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace TiaSbom.Gitea
@@ -30,8 +31,20 @@ namespace TiaSbom.Gitea
             if (!File.Exists(path))
                 throw new FileNotFoundException("TiaSbom configuration not found. Ask IT to deploy it.", path);
 
-            var settings = GiteaClient.Serializer().Deserialize<GiteaSettings>(File.ReadAllText(path));
-            if (string.IsNullOrWhiteSpace(settings?.BaseUrl) || string.IsNullOrWhiteSpace(settings.Owner))
+            var values = Core.Json.Parse(File.ReadAllText(path)) as Dictionary<string, object>
+                ?? throw new InvalidDataException($"{path} must contain a JSON object.");
+
+            var settings = new GiteaSettings
+            {
+                BaseUrl = values.Get("BaseUrl") as string,
+                Owner = values.Get("Owner") as string,
+                Token = values.Get("Token") as string,
+            };
+            if (values.Get("Branch") is string branch) settings.Branch = branch;
+            if (values.Get("PrivateRepos") is bool privateRepos) settings.PrivateRepos = privateRepos;
+            if (values.Get("TimeoutSeconds") is double timeout) settings.TimeoutSeconds = (int)timeout;
+
+            if (string.IsNullOrWhiteSpace(settings.BaseUrl) || string.IsNullOrWhiteSpace(settings.Owner))
                 throw new InvalidDataException($"BaseUrl and Owner must be set in {path}.");
             return settings;
         }

@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 
 namespace TiaSbom.Gitea
 {
@@ -108,9 +107,9 @@ namespace TiaSbom.Gitea
             for (int page = 1; ; page++)
             {
                 string text = await GetStringAsync($"orgs/{Esc(_settings.Owner)}/repos?limit=50&page={page}").ConfigureAwait(false);
-                var items = Serializer().DeserializeObject(text) as IEnumerable;
+                var items = Core.Json.Parse(text) as List<object>;
                 int count = 0;
-                foreach (var item in items ?? new object[0])
+                foreach (var item in items ?? new List<object>())
                 {
                     if ((item as Dictionary<string, object>)?.Get("name") is string name) names.Add(name);
                     count++;
@@ -129,13 +128,13 @@ namespace TiaSbom.Gitea
                 if (response.StatusCode != HttpStatusCode.NotFound) await ThrowAsync(response, "read repository " + repo).ConfigureAwait(false);
             }
 
-            var body = new Dictionary<string, object>
+            var body = new Core.JsonObject
             {
-                ["name"] = repo,
-                ["description"] = description,
-                ["private"] = _settings.PrivateRepos,
-                ["auto_init"] = true,              // creates the default branch so the Contents API works
-                ["default_branch"] = _settings.Branch,
+                { "name", repo },
+                { "description", description },
+                { "private", _settings.PrivateRepos },
+                { "auto_init", true },             // creates the default branch so the Contents API works
+                { "default_branch", _settings.Branch },
             };
             using (var response = await _http.PostAsync($"orgs/{Esc(_settings.Owner)}/repos", JsonContent(body)).ConfigureAwait(false))
             {
@@ -148,13 +147,13 @@ namespace TiaSbom.Gitea
         public async Task<Commit> PutFileAsync(string repo, string repoPath, string content, string message)
         {
             string sha = await GetShaAsync(repo, repoPath).ConfigureAwait(false);
-            var body = new Dictionary<string, object>
+            var body = new Core.JsonObject
             {
-                ["content"] = Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
-                ["message"] = message,
-                ["branch"] = _settings.Branch,
+                { "content", Convert.ToBase64String(Encoding.UTF8.GetBytes(content)) },
+                { "message", message },
+                { "branch", _settings.Branch },
+                { "sha", sha },                    // skipped when null (new file)
             };
-            if (sha != null) body["sha"] = sha;
 
             var request = new HttpRequestMessage(sha == null ? HttpMethod.Post : HttpMethod.Put, ContentsUri(repo, repoPath))
             {
@@ -172,7 +171,7 @@ namespace TiaSbom.Gitea
         private async Task TryCreateTagAsync(string repo, string tag, string targetSha, string message)
         {
             if (targetSha == null) return;
-            var body = new Dictionary<string, object> { ["tag_name"] = tag, ["target"] = targetSha, ["message"] = message };
+            var body = new Core.JsonObject { { "tag_name", tag }, { "target", targetSha }, { "message", message } };
             using (var response = await _http.PostAsync($"repos/{Esc(_settings.Owner)}/{Esc(repo)}/tags", JsonContent(body)).ConfigureAwait(false))
             {
                 if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.Conflict
@@ -211,14 +210,11 @@ namespace TiaSbom.Gitea
 
         private static string Esc(string s) => Uri.EscapeDataString(s);
 
-        private static StringContent JsonContent(object body) =>
-            new StringContent(Serializer().Serialize(body), Encoding.UTF8, "application/json");
-
-        // JavaScriptSerializer ships with .NET Framework (GAC) — no version conflicts inside the TIA process.
-        internal static JavaScriptSerializer Serializer() => new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+        private static StringContent JsonContent(Core.JsonObject body) =>
+            new StringContent(Core.Json.Serialize(body), Encoding.UTF8, "application/json");
 
         private static Dictionary<string, object> Parse(string json) =>
-            Serializer().DeserializeObject(json) as Dictionary<string, object>;
+            Core.Json.Parse(json) as Dictionary<string, object>;
 
         public void Dispose() => _http.Dispose();
 
