@@ -16,7 +16,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $framework = if ($Api -eq 'V16') { 'net462' } else { 'net48' }
-$props = @("-p:TiaApi=$Api", "-p:TiaPortal=$Portal", '-c', $Configuration)
+# GitHub ZIPs restore old file times, which an incremental build takes for unchanged sources.
+$props = @("-p:TiaApi=$Api", "-p:TiaPortal=$Portal", '-c', $Configuration, '--no-incremental')
 
 dotnet build "$PSScriptRoot\src\TiaSbom.Cli" @props
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

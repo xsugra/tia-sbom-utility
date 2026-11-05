@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 using Siemens.Engineering;
@@ -99,13 +98,10 @@ namespace TiaSbom.AddIn
                     string text = $"SBOM was saved to Gitea project '{key}'.";
                     if (askedForKey)
                         text += $"\n\nTip: set Project → Properties → Family = {key}\nso that next exports go there without asking.";
-                    if (url != null) text += "\n\nOpen the commit in the browser?";
+                    if (url != null) text += "\n\n" + url;
 
-                    if (Ui.Message(text, Title, url != null ? MessageBoxButtons.YesNo : MessageBoxButtons.OK,
-                            MessageBoxIcon.Information) == DialogResult.Yes)
-                    {
-                        Process.Start(url);
-                    }
+                    // No Process.Start: System.Diagnostics.Process requires full trust, the V17 sandbox rejects it.
+                    Ui.Message(text, Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (GiteaException ex) when (ex.IsAuthError)

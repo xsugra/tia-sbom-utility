@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -27,8 +26,7 @@ namespace TiaSbom.AddIn
         {
             try
             {
-                Write($"Start: process={Process.GetCurrentProcess().ProcessName}, " +
-                      $"apartment={Thread.CurrentThread.GetApartmentState()}, " +
+                Write($"Start: apartment={Thread.CurrentThread.GetApartmentState()}, " +
                       $"interactive={Environment.UserInteractive}, " +
                       $"fullTrust={AppDomain.CurrentDomain.IsFullyTrusted}");
             }
