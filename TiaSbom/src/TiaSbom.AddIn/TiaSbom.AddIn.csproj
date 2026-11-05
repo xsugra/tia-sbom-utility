@@ -1,16 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
+  <!--
+    Before V21 Siemens.Engineering.AddIn.dll contains its own copy of the object model (TiaPortal, Project, ...),
+    which clashes with Siemens.Engineering.dll. An Add-In may therefore reference only the Add-In API, so the
+    collector is compiled into the Add-In from source instead of using TiaSbom.Tia.dll.
+  -->
+  <PropertyGroup Condition="'$(TiaApi)' == 'V21'">
     <UseTiaOpenness>true</UseTiaOpenness>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="$(TiaAddInApiDir)\Siemens.Engineering.AddIn*.dll" Condition="'$(TiaApi)' != 'V21'">
-      <Private>false</Private>
-    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
     <ProjectReference Include="..\TiaSbom.Core\TiaSbom.Core.csproj" />
-    <ProjectReference Include="..\TiaSbom.Tia\TiaSbom.Tia.csproj" />
     <ProjectReference Include="..\TiaSbom.Gitea\TiaSbom.Gitea.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TiaApi)' == 'V21'">
+    <ProjectReference Include="..\TiaSbom.Tia\TiaSbom.Tia.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TiaApi)' != 'V21'">
+    <Reference Include="$(TiaAddInApiDir)\Siemens.Engineering.AddIn*.dll">
+      <Private>false</Private>
+    </Reference>
+    <Compile Include="..\TiaSbom.Tia\HardwareCollector.cs" Link="HardwareCollector.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Update="AddInPublisherConfig.*.xml" CopyToOutputDirectory="PreserveNewest" />
