@@ -18,7 +18,6 @@
   </FeatureAssembly>
   <AdditionalAssemblies>
     <AssemblyInfo><Assembly>TiaSbom.Core.dll</Assembly></AssemblyInfo>
-    <AssemblyInfo><Assembly>TiaSbom.Tia.dll</Assembly></AssemblyInfo>
     <AssemblyInfo><Assembly>TiaSbom.Gitea.dll</Assembly></AssemblyInfo>
     <!-- No NuGet dependencies on purpose: the Add-In has no binding redirects inside the TIA process. -->
   </AdditionalAssemblies>
