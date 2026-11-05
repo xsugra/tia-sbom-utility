@@ -11,7 +11,7 @@ namespace TiaSbom.AddIn
     internal static class RepoPickerDialog
     {
         /// <returns>Normalized project key, or null when cancelled.</returns>
-        public static string Ask(string projectName, string suggestion, IList<string> existing)
+        public static string Ask(IWin32Window owner, string projectName, string suggestion, IList<string> existing)
         {
             using (var form = new Form
             {
@@ -62,7 +62,9 @@ namespace TiaSbom.AddIn
                 form.AcceptButton = ok;
                 form.CancelButton = cancel;
 
-                return form.ShowDialog() == DialogResult.OK ? ProjectKey.Normalize(combo.Text) : null;
+                DialogResult answer = form.ShowDialog(owner);
+                Log.Write($"Project key dialog -> {answer}");
+                return answer == DialogResult.OK ? ProjectKey.Normalize(combo.Text) : null;
             }
         }
     }
