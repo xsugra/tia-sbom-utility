@@ -40,6 +40,7 @@ namespace TiaSbom.Cli
                               $"from '{snapshot.ProjectName}' (TIA {snapshot.TiaVersion}, Openness API {TiaBuild.Api}, Family: '{snapshot.Family}').");
             if (!snapshot.UnpluggedItemsRead)
                 Console.Error.WriteLine($"WARNING: Openness API {TiaBuild.Api} build does not read unplugged modules.");
+            if (Has(args, "--dump-hw")) DumpHardware(snapshot);
             string json = SbomBuilder.ToJson(SbomBuilder.Build(snapshot));
 
             if (outFile != null)
@@ -74,6 +75,16 @@ namespace TiaSbom.Cli
                 }
             }
             return 0;
+        }
+
+        // Shows every device item, also those left out of the SBOM, to explain why a module is missing.
+        private static void DumpHardware(ProjectSnapshot snapshot)
+        {
+            foreach (HwItem item in snapshot.Items)
+            {
+                Console.WriteLine($"{(item.IsProduct ? "+" : "-")} {item.Path} | type={item.TypeIdentifier} | " +
+                                  $"name={item.TypeName} | order={item.OrderNumber} | fw={item.FirmwareVersion}");
+            }
         }
 
         private static ProjectSnapshot FromFile(string projectPath, string archivePath)
@@ -139,7 +150,7 @@ namespace TiaSbom.Cli
 
         private static void PrintUsage() => Console.WriteLine(
 @"tiasbom --project <file.ap21> | --archive <file.zap21> | --attach
-        [--portal Vxx] [--out <sbom.json>] [--upload [--key <project key>] [--force]] [--config <config.json>]
+        [--portal Vxx] [--out <sbom.json>] [--upload [--key <project key>] [--force]] [--config <config.json>] [--dump-hw]
 tiasbom --login");
     }
 }

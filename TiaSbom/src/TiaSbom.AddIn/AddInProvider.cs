@@ -52,10 +52,7 @@ namespace TiaSbom.AddIn
 
         private void OnExport(MenuSelectionProvider<IEngineeringObject> selection)
         {
-            // TIA's own progress dialog needs neither Windows Forms nor file access, so it works when those fail.
-            // TODO: remove the start notice once the Add-In is verified on V17.
             Log.Write("Export clicked.");
-            Notify("SBOM started. " + Log.Status, 5000);
             try
             {
                 new SbomExport(_tiaPortal).Run();
@@ -63,15 +60,12 @@ namespace TiaSbom.AddIn
             catch (Exception ex)
             {
                 Log.Write("Export crashed: " + ex);
-                Notify($"SBOM failed: {ex.GetType().Name}: {ex.Message}", 20000);
-            }
-        }
 
-        private void Notify(string text, int milliseconds)
-        {
-            using (_tiaPortal.ExclusiveAccess(text))
-            {
-                Thread.Sleep(milliseconds);
+                // TIA's own progress dialog needs no Windows Forms, so it still works when showing a window was the failure.
+                using (_tiaPortal.ExclusiveAccess($"SBOM failed: {ex.GetType().Name}: {ex.Message}"))
+                {
+                    Thread.Sleep(20000);
+                }
             }
         }
     }
