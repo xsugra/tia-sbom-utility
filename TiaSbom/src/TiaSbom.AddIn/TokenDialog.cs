@@ -6,7 +6,7 @@ namespace TiaSbom.AddIn
     /// <summary>Asked once per user/PC; the token is then kept DPAPI-encrypted by TokenStore.</summary>
     internal static class TokenDialog
     {
-        public static string Ask()
+        public static string Ask(IWin32Window owner)
         {
             using (var form = new Form
             {
@@ -26,7 +26,9 @@ namespace TiaSbom.AddIn
                 form.AcceptButton = ok;
                 form.CancelButton = cancel;
 
-                return form.ShowDialog() == DialogResult.OK ? box.Text.Trim() : null;
+                DialogResult answer = form.ShowDialog(owner);
+                Log.Write($"Token dialog -> {answer}");
+                return answer == DialogResult.OK ? box.Text.Trim() : null;
             }
         }
     }

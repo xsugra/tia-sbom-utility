@@ -17,7 +17,7 @@ namespace TiaSbom.Core
             sb.AppendLine();
             sb.AppendLine("| | |");
             sb.AppendLine("|---|---|");
-            sb.AppendLine($"| Project key (TIA *Family*) | `{key}` |");
+            sb.AppendLine($"| Project key | `{key}` |");
             sb.AppendLine($"| Last exported project | `{s.ProjectName}` |");
             sb.AppendLine($"| TIA Portal | {s.TiaVersion} |");
             sb.AppendLine($"| Hardware modules | {modules} |");

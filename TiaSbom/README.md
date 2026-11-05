@@ -88,6 +88,7 @@ Po skončení zákazky repozitár v Gitea *Archive* → read-only, dohľadateľn
    Test: `%APPDATA%\Siemens\Automation\Portal V21\UserAddIns`.
    Firma: `C:\ProgramData\Siemens\Automation\Portal V21\CorporateAddIns` (IT), podpísať firemným certifikátom.
 7. **Použitie** – TIA → záložka *Add-ins* → aktivovať → pravý klik na projekt → **SBOM → Export SBOM to Gitea**.
+8. **Diagnostika add-inu** – každý krok exportu sa zapisuje do `%APPDATA%\TiaSbom\addin.log`.
 
 ## Otvorené body
 
