@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Written against PublicAPI\V17.AddIn\Siemens.Engineering.AddIn.Publisher.xsd.
+  V17 has no UnrestrictedPermissions: the Add-In runs in a sandbox with exactly the permissions listed here.
+-->
+<PackageConfiguration xmlns="http://www.siemens.com/automation/Openness/AddIn/Publisher/V17">
+  <Author>YourCompany - Automation Tools</Author>
+  <Description>Exports a CycloneDX SBOM (hardware + firmware) of the open project and commits it to Gitea.</Description>
+  <Product>
+    <Name>TiaSbom</Name>
+    <Id>TiaSbom</Id>
+    <Version>0.2.0</Version>
+  </Product>
+  <FeatureAssembly>
+    <AssemblyInfo>
+      <Assembly>TiaSbom.AddIn.dll</Assembly>
+    </AssemblyInfo>
+  </FeatureAssembly>
+  <AdditionalAssemblies>
+    <AssemblyInfo><Assembly>TiaSbom.Core.dll</Assembly></AssemblyInfo>
+    <AssemblyInfo><Assembly>TiaSbom.Tia.dll</Assembly></AssemblyInfo>
+    <AssemblyInfo><Assembly>TiaSbom.Gitea.dll</Assembly></AssemblyInfo>
+    <!-- No NuGet dependencies on purpose: the Add-In has no binding redirects inside the TIA process. -->
+  </AdditionalAssemblies>
+  <RequiredPermissions>
+    <TIAPermissions>
+      <TIA.ReadOnly />
+    </TIAPermissions>
+    <SecurityPermissions>
+      <System.Net.WebPermission />
+      <System.Security.Permissions.EnvironmentPermission />
+      <System.Security.Permissions.FileIOPermission />
+      <System.Security.Permissions.UIPermission />
+      <System.Security.Permissions.SecurityPermission.UnmanagedCode />
+      <Siemens.Engineering.AddIn.Permissions.ProcessStartPermission />
+    </SecurityPermissions>
+  </RequiredPermissions>
+</PackageConfiguration>

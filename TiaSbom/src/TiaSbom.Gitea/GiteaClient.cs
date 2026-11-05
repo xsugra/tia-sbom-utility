@@ -25,7 +25,9 @@ namespace TiaSbom.Gitea
         static GiteaClient()
         {
             // .NET Framework 4.8 may default to old protocols depending on OS / registry.
-            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+            // The V17 Add-In sandbox may refuse this; a failure here must not make the whole type unusable.
+            try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; }
+            catch (System.Security.SecurityException) { }
         }
 
         public GiteaClient(GiteaSettings settings, string token)

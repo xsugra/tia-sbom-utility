@@ -3,7 +3,7 @@
 
     .\build.ps1 -Api V17                  build on a machine with TIA V17
     .\build.ps1 -Api V17 -Portal V19      use the V17 API shipped with TIA V19
-    .\build.ps1 -Api V21 -AddIn           also build and package the Add-In
+    .\build.ps1 -Api V17 -AddIn           also build and package the Add-In
 
   API V16 runs on TIA V16-V19, V17 on V17-V20, V21 on V21 only.
 #>
@@ -24,19 +24,20 @@ Write-Host "CLI: $PSScriptRoot\src\TiaSbom.Cli\bin\$Api\$Configuration\$framewor
 
 if (-not $AddIn) { exit 0 }
 
-# The publisher configuration is validated only against the V21 schema.
-if ($Api -ne 'V21') {
-    throw "Add-In packaging for API $Api needs its publisher XSD from PublicAPI\$Api. Only V21 is verified."
+# Each API has its own publisher schema, so each needs its own configuration file.
+if ($Api -eq 'V16') {
+    throw "Add-In packaging for API V16 needs a publisher configuration written against PublicAPI\V16.AddIn."
 }
 
 dotnet build "$PSScriptRoot\src\TiaSbom.AddIn" @props
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $output = "$PSScriptRoot\src\TiaSbom.AddIn\bin\$Api\$Configuration\$framework"
-$publisher = "C:\Program Files\Siemens\Automation\Portal $Portal\PublicAPI\$Api\Siemens.Engineering.AddIn.Publisher.exe"
+$apiFolder = if ($Api -eq 'V21') { 'V21' } else { "$Api.AddIn" }
+$publisher = "C:\Program Files\Siemens\Automation\Portal $Portal\PublicAPI\$apiFolder\Siemens.Engineering.AddIn.Publisher.exe"
 Push-Location $output
 try {
-    & $publisher -f AddInPublisherConfig.xml -o "TiaSbom.$Api.addin" -c
+    & $publisher -f "AddInPublisherConfig.$Api.xml" -o "TiaSbom.$Api.addin" -c
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 finally { Pop-Location }

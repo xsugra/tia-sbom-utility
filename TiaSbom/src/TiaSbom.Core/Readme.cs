@@ -9,7 +9,7 @@ namespace TiaSbom.Core
     {
         public static string Build(string key, ProjectSnapshot s)
         {
-            int modules = s.Items.Count(i => !string.IsNullOrWhiteSpace(i.OrderNumber));
+            int modules = s.Items.Count(i => i.IsProduct);
             var sb = new StringBuilder();
             sb.AppendLine($"# SBOM – {key}");
             sb.AppendLine();
