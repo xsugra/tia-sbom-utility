@@ -102,11 +102,13 @@ namespace TiaSbom.Tia
                 IsPlugged = item.IsPlugged,
                 // Dynamic attributes ("Mandatory attributes of device items") — not present on every item.
                 TypeName = Get<string>(item, "TypeName"),
-                OrderNumber = Get<string>(item, "OrderNumber"),
-                FirmwareVersion = Get<string>(item, "FirmwareVersion"),
+                OrderNumber = Filled(Get<string>(item, "OrderNumber")) ?? Core.HwIdentity.OrderNumber(item.TypeIdentifier),
+                FirmwareVersion = Filled(Get<string>(item, "FirmwareVersion")) ?? Core.HwIdentity.FirmwareVersion(item.TypeIdentifier),
             });
             return path;
         }
+
+        private static string Filled(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
         private static T Get<T>(IEngineeringObject obj, string attribute)
         {

@@ -27,6 +27,27 @@ namespace TiaSbom.Core
             (TypeIdentifier == null || !TypeIdentifier.StartsWith("System:") || OrderNumber.Any(char.IsDigit));
     }
 
+    /// <summary>
+    /// Reads a hardware catalog identifier: "OrderNumber:&lt;order&gt;[/&lt;firmware&gt;[/&lt;additional&gt;]]".
+    /// Openness allows the OrderNumber attribute of a device item to be empty, the identifier still names the product.
+    /// </summary>
+    public static class HwIdentity
+    {
+        private const string Prefix = "OrderNumber:";
+
+        public static string OrderNumber(string typeIdentifier) => Part(typeIdentifier, 0);
+
+        public static string FirmwareVersion(string typeIdentifier) => Part(typeIdentifier, 1);
+
+        private static string Part(string typeIdentifier, int index)
+        {
+            if (typeIdentifier == null || !typeIdentifier.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase)) return null;
+
+            string[] parts = typeIdentifier.Substring(Prefix.Length).Split('/');
+            return index < parts.Length && !string.IsNullOrWhiteSpace(parts[index]) ? parts[index].Trim() : null;
+        }
+    }
+
     /// <summary>Engineering software used by the project (Project.UsedProducts), e.g. "STEP 7 Professional" V21.</summary>
     public sealed class UsedProduct
     {
