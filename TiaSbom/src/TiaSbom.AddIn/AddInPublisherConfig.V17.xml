@@ -9,7 +9,7 @@
   <Product>
     <Name>TiaSbom</Name>
     <Id>TiaSbom</Id>
-    <Version>0.2.2</Version>
+    <Version>0.2.3</Version>
   </Product>
   <FeatureAssembly>
     <AssemblyInfo>
@@ -31,7 +31,6 @@
       <System.Security.Permissions.FileIOPermission />
       <System.Security.Permissions.UIPermission />
       <System.Security.Permissions.SecurityPermission.UnmanagedCode />
-      <Siemens.Engineering.AddIn.Permissions.ProcessStartPermission />
     </SecurityPermissions>
   </RequiredPermissions>
 </PackageConfiguration>

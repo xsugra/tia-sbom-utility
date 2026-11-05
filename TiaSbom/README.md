@@ -36,7 +36,7 @@ Jeden zdrojový kód, jeden build na každé Openness API:
 - Starší projekt sa neotvára cez `OpenWithUpgrade`, lebo vytvára povýšenú kópiu. Projekt sa spracuje vo svojej verzii TIA.
 - `Device.UnpluggedItems` je overené vo V17 aj V21. Build V16 ho zatiaľ nečíta, v SBOM má `tia:unpluggedItemsRead = false`.
 - Add-in má konfiguráciu pre každé API: `AddInPublisherConfig.<Api>.xml`. Do V20 je jeho API a publisher v `PublicAPI\<Api>.AddIn`.
-- V17 nemá `UnrestrictedPermissions`, add-in tam beží v sandboxe s explicitnými oprávneniami. V21 je overený, V17 sa testuje.
+- V17 nemá `UnrestrictedPermissions`, add-in tam beží v sandboxe s explicitnými oprávneniami. `System.Diagnostics.Process` v ňom nefunguje, preto add-in odkaz na commit iba zobrazí. V21 je overený, V17 sa testuje.
 
 ## Projektový kľúč = Gitea repozitár
 
@@ -85,7 +85,8 @@ Po skončení zákazky repozitár v Gitea *Archive* → read-only, dohľadateľn
    ```
    powershell -ExecutionPolicy Bypass -File .\build.ps1 -Api V17 -AddIn
    ```
-   Test: `%APPDATA%\Siemens\Automation\Portal V21\UserAddIns`.
+   Test na V17: `C:\Program Files\Siemens\Automation\Portal V17\AddIns` (práva správcu).
+   Použitú cestu a verziu ukazuje TIA v *Add-ins → Details*.
    Firma: `C:\ProgramData\Siemens\Automation\Portal V21\CorporateAddIns` (IT), podpísať firemným certifikátom.
 7. **Použitie** – TIA → záložka *Add-ins* → aktivovať → pravý klik na projekt → **SBOM → Export SBOM to Gitea**.
 8. **Diagnostika add-inu** – každý krok exportu sa zapisuje do `%APPDATA%\TiaSbom\addin.log`.

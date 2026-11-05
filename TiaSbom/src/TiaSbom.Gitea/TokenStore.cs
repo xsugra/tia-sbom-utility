@@ -2,7 +2,12 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
+
+// Under level 2 rules a partial-trust assembly is transparent and may not call native code at all.
+// Level 1 lets the V17 Add-In sandbox use the UnmanagedCode permission it grants for crypt32.
+[assembly: SecurityRules(SecurityRuleSet.Level1)]
 
 namespace TiaSbom.Gitea
 {
