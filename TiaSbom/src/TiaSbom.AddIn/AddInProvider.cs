@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using Siemens.Engineering;
 using Siemens.Engineering.AddIn;
 using Siemens.Engineering.AddIn.Menu;
@@ -17,6 +19,7 @@ namespace TiaSbom.AddIn
         public AddInProvider(TiaPortal tiaPortal)
         {
             _tiaPortal = tiaPortal;
+            Log.Write("Provider created.");
         }
 
         protected override IEnumerable<ContextMenuAddIn> GetContextMenuAddIns()
@@ -38,12 +41,38 @@ namespace TiaSbom.AddIn
         protected override void BuildContextMenuItems(ContextMenuAddInRoot addInRootSubmenu)
         {
             addInRootSubmenu.Items.AddActionItem<IEngineeringObject>(
-                "Export SBOM to Gitea", OnExport, _ => MenuStatus.Enabled);
+                "Export SBOM to Gitea", OnExport, OnMenuStatus);
+        }
+
+        private MenuStatus OnMenuStatus(MenuSelectionProvider<IEngineeringObject> selection)
+        {
+            Log.Write("Menu opened.");
+            return MenuStatus.Enabled;
         }
 
         private void OnExport(MenuSelectionProvider<IEngineeringObject> selection)
         {
-            new SbomExport(_tiaPortal).Run();
+            // TIA's own progress dialog needs neither Windows Forms nor file access, so it works when those fail.
+            // TODO: remove the start notice once the Add-In is verified on V17.
+            Log.Write("Export clicked.");
+            Notify("SBOM started. " + Log.Status, 5000);
+            try
+            {
+                new SbomExport(_tiaPortal).Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Export crashed: " + ex);
+                Notify($"SBOM failed: {ex.GetType().Name}: {ex.Message}", 20000);
+            }
+        }
+
+        private void Notify(string text, int milliseconds)
+        {
+            using (_tiaPortal.ExclusiveAccess(text))
+            {
+                Thread.Sleep(milliseconds);
+            }
         }
     }
 }

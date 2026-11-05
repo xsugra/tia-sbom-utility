@@ -6,25 +6,21 @@ using System.Threading;
 namespace TiaSbom.AddIn
 {
     /// <summary>
-    /// Diagnostic log in %APPDATA%\TiaSbom\addin.log. It is the only trace when the Add-In host swallows an error
-    /// or a window never appears. Never write the token here.
+    /// Diagnostic log: addin.log in %APPDATA%\TiaSbom, or in %TEMP% when that fails. It is the only trace when
+    /// the Add-In host swallows an error or a window never appears. Never write the token here.
     /// </summary>
     internal static class Log
     {
-        private static string FilePath =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TiaSbom", "addin.log");
+        private const string FileName = "addin.log";
+
+        /// <summary>Where the last entry went, or why it could not be written.</summary>
+        public static string Status { get; private set; } = "nothing written yet";
 
         public static void Write(string message)
         {
-            try
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-                File.AppendAllText(FilePath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}");
-            }
-            catch (Exception)
-            {
-                // Logging must never break the export.
-            }
+            string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}";
+            if (TryAppend(AppDataFolder, line)) return;
+            TryAppend(Path.GetTempPath, line);
         }
 
         public static void WriteEnvironment()
@@ -39,6 +35,28 @@ namespace TiaSbom.AddIn
             catch (Exception ex)
             {
                 Write("Start: environment not readable: " + ex.Message);
+            }
+        }
+
+        private static string AppDataFolder() =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TiaSbom");
+
+        // Logging must never break the export, so a failure only ends up in Status.
+        private static bool TryAppend(Func<string> folder, string line)
+        {
+            try
+            {
+                string path = folder();
+                Directory.CreateDirectory(path);
+                string file = Path.Combine(path, FileName);
+                File.AppendAllText(file, line);
+                Status = "log: " + file;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Status = $"log failed: {ex.GetType().Name}: {ex.Message}";
+                return false;
             }
         }
     }

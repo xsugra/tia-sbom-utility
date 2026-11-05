@@ -130,17 +130,9 @@ namespace TiaSbom.AddIn
             }
         }
 
-        // The last step of a failed export: a failure to show the message must still end up in the log.
         private static void Report(string text, MessageBoxIcon icon)
         {
-            try
-            {
-                Ui.Message(text, Title, MessageBoxButtons.OK, icon);
-            }
-            catch (Exception ex)
-            {
-                Log.Write("Message not shown: " + ex);
-            }
+            Ui.Message(text, Title, MessageBoxButtons.OK, icon);
         }
     }
 }
