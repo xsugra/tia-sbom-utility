@@ -72,7 +72,8 @@ Beží v každom režime a nesmie závisieť od TIA.
 | `Json.cs` | Zapisovač, `JsonObject` zachováva poradie a vynecháva null |
 | `JsonReader.cs` | Parser, objekty ignorujú veľkosť písmen v kľúčoch |
 | `ProjectKey.cs` | Normalizácia kľúča, návrh, názov verzie |
-| `MismatchCheck.cs` | Ochrana pred zámenou |
+| `MismatchCheck.cs` | Ochrana pred zámenou, porovnáva s najbližšou verziou |
+| `ExportPlan.cs` | `ExportGuard`, `SbomSignature` a `ExportPlan`: čo sa smie exportovať a pod akým názvom |
 | `Readme.cs` | Generovaný `README.md` repozitára |
 | `TiaBuild.cs` | Verzia API a verzia TIA z prípony súboru |
 
@@ -113,16 +114,18 @@ flowchart TD
 | `GiteaClient.cs` | REST API cez `HttpClient` |
 | `GiteaSettings.cs` | Načítanie `%ProgramData%\TiaSbom\config.json` |
 | `TokenStore.cs` | DPAPI cez `crypt32`, `%APPDATA%\TiaSbom\token.bin` |
+| `SbomPublisher.cs` | Spoločný zápis pre add-in a CLI, opakovanie pri súbehu |
+| `ExportError.cs` | Technické chyby preložené pre používateľa |
 
 Volania Gitea:
 
 | Metóda | Endpoint | Poznámka |
 |---|---|---|
 | `ListReposAsync` | `GET orgs/{org}/repos` | po 50 |
-| `GetPreviousAsync` | `GET repos/.../contents/latest.json` | 404 je prvý export |
+| `GetVersionsAsync` | `GET repos/.../contents/versions`, potom `sbom.json` každej verzie | 404 je prvý export |
 | `EnsureRepoAsync` | `GET repos/...`, `POST orgs/{org}/repos` | `auto_init`, 409 sa toleruje |
-| `PutFileAsync` | `POST` alebo `PUT repos/.../contents/...` | podľa existencie `sha` |
-| `TryCreateTagAsync` | `POST repos/.../tags` | 409 a 422 sa tolerujú |
+| `UploadSbomAsync` | `POST repos/.../contents` | všetky súbory v jednom commite |
+| `TryCreateTagAsync` | `POST repos/.../tags` | problém sa vracia ako varovanie |
 
 `TokenStore` používa pravidlá `SecurityRuleSet.Level1`, deklarované v tom istom súbore. Bez nich by čiastočne dôveryhodné zostavenie nesmelo volať natívny kód.
 
@@ -248,23 +251,17 @@ Priorita: **V** vysoká, **S** stredná, **N** nízka.
 
 | Pr. | Miesto | Problém | Návrh |
 |---|---|---|---|
-| V | `GiteaClient.UploadSbomAsync` | Opakovaný export prepíše `versions/<názov>/sbom.json`, tag ostane na prvom commite. Pre archív CRA sa tag a súbor rozídu. | Rozhodnúť: nemenná verzia s varovaním alebo číslované exporty |
 | V | `SbomBuilder` | Výstup sa nevaliduje podľa schémy CycloneDX, hoci to komentár požaduje | Validácia v teste alebo CI |
 | V | celé riešenie | Žiadne automatické testy | Testy pre `Core` bez TIA |
 | V | `SbomBuilder` | Chýba CPE | Mapovanie čísel na CPE |
 | V | GSD položky | `IV3-XXXX` nie je model, verzia je verzia popisu | Ručné doplnenie alebo mapovanie |
-| S | `GiteaClient` | Upload sú tri commity a tag, nie atomická operácia. Pri zlyhaní ostane čiastočný stav | Gitea API na viac súborov v jednom commite |
-| S | `SbomBuilder` | Nezmenený projekt vytvorí nové commity, lebo sa mení čas a `serialNumber` | Porovnať obsah pred zápisom |
-| S | `SbomExport`, `GiteaException` | 403 zmaže `token.bin`, aj keď príčina nie je token, napríklad archivovaný repozitár | Rozlíšiť chyby podľa odpovede |
 | S | `App.FromFile` | Rozbalený archív ostáva v `%TEMP%\tiasbom` | Upratať po exporte |
-| S | `HardwareCollector` | Multiuser projekt nemá `UsedProducts` a SBOM to neoznačí | Pridať príznak |
-| S | `GiteaClient.GetPreviousAsync` | Prázdny `content` tichý preskočí kontrolu zámeny | Overiť limit a pri veľkom súbore použiť raw endpoint |
+| S | `GiteaClient.GetVersionsAsync` | Každý export číta všetky verzie, pri stovkách verzií bude pomalý | Sledovať, prípadne čítať súhrn |
 | S | SBOM | `tia:projectPath` a `tia:exportedBy` sú viditeľné všetkým | Posúdiť, či sú potrebné |
 | S | V21 konfigurácia | `UnrestrictedAccess` dáva add-inu plnú dôveru | Vymenované oprávnenia, keďže kód už funguje v sandboxe |
 | N | verzie | `Version` 0.2.0 v `Directory.Build.props` nesúhlasí s add-inom 0.2.6 | Jeden zdroj verzie |
 | N | `AddInProvider.cs` | Zastaraný `TODO(V21)` v komentári | Odstrániť |
 | N | `Readme.cs`, `Model.cs` | `Hardware modules` opakuje logiku `IsProduct` | Zjednotiť, ak pribudnú kategórie |
-| N | `RepoPickerDialog` | `Contains` rozlišuje veľkosť písmen, Gitea nie | Porovnávať bez ohľadu na veľkosť |
 | N | `MismatchCheck` | Premenovanie stanice zníži zhodu | Vážiť aj samotné objednávacie číslo |
 | N | `build.ps1` | Nevie nasadiť add-in | Parameter pre cieľový priečinok |
 | N | `TiaSbom/README.md`, konfigurácie | `YourCompany` | Skutočný názov pred produkciou |

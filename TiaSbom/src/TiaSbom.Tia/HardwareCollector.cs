@@ -39,6 +39,7 @@ namespace TiaSbom.Tia
                 TiaVersion = TiaBuild.VersionFromPath(path) ?? SbomBuilder.Unknown,
                 // Read dynamically: the Family property is documented on Project, not on ProjectBase.
                 Family = Get<string>(project, "Family")?.Trim(),
+                HasUnsavedChanges = Get<bool>(project, "IsModified"),
 #if TIA_HAS_UNPLUGGED_ITEMS
                 UnpluggedItemsRead = true,
 #endif
@@ -47,6 +48,7 @@ namespace TiaSbom.Tia
             // "Read project related attributes" documents UsedProducts on Project only.
             if (project is Project single)
             {
+                snapshot.UsedProductsRead = true;
                 foreach (var product in single.UsedProducts)
                     snapshot.UsedProducts.Add(new Core.UsedProduct { Name = product.Name, Version = product.Version });
             }

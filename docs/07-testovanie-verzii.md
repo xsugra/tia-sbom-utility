@@ -127,9 +127,13 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 - [ ] Pri prázdnom `Family` sa ukáže výber kľúča.
 - [ ] Pri vyplnenom `Family` export prebehne bez dialógu.
 - [ ] Nesprávny repozitár vyvolá varovanie.
+- [ ] Druhá verzia tej istej zákazky s iným hardvérom nevyvolá varovanie a README ukáže obe.
 - [ ] Zlý token ukáže chybu a ďalší export sa znova spýta.
 - [ ] Nedostupná Gitea ukáže chybu, TIA nezamrzne natrvalo.
 - [ ] Projekt zostane bez zmien.
+- [ ] Neuložený projekt sa odmietne.
+- [ ] Opakovaný export bez zmeny nič nezapíše.
+- [ ] Zmena hardvéru pri rovnakom názve vytvorí `<názov>_2` a pôvodná verzia ostane.
 
 **Gitea**
 
@@ -207,3 +211,24 @@ Neotestované. Build V16 nebol ani raz zostavený. `tia:unpluggedItemsRead` je `
 | Chýbajúce zariadenie | `--dump-hw` a jeho riadky |
 
 Pri novej chybe doplňte [08-riesenie-problemov.md](08-riesenie-problemov.md).
+
+## Testy výnimiek
+
+Stačí ich prejsť raz na V17, V19 a V21. Každá chyba musí povedať, čo sa stalo a čo robiť.
+
+| Test | Očakávaný výsledok |
+|---|---|
+| Neuložený projekt | Export sa zastaví, výzva na uloženie |
+| Projekt bez hardvéru | Export sa zastaví |
+| Export bez zmeny | Správa, že obsah už existuje, žiadny nový commit |
+| Zmena hardvéru pri rovnakom názve | `<názov>_2`, pôvodná verzia ostane |
+| Dve verzie s iným hardvérom a iným názvom | Bez varovania, README ukáže obe |
+| „Save as“ s novým číslom a starým `Family` | Varovanie o čísle zákazky |
+| Nový nečíselný kľúč s preklepom | Varovanie o podobnom repozitári |
+| Názov s diakritikou | `Čiara` sa uloží ako `Ciara` |
+| Názov dlhší ako 100 znakov | Skrátený názov s hashom |
+| Archivovaný repozitár | Zrozumiteľná chyba, `token.bin` ostane |
+| Zlý token | Výzva na nový token |
+| Vypnutá Gitea | Hláška o spojení, TIA nezamrzne |
+| Dvaja exportujú naraz | Oba exporty sú v Gitea a v README |
+| `config.json` chýba alebo je poškodený | Hláška s kontaktom na administrátora |

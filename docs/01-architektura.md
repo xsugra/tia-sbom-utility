@@ -63,7 +63,7 @@ sequenceDiagram
         A->>U: Dialóg výberu kľúča
         U-->>A: Kľúč projektu
     end
-    A->>G: Prečítať latest.json
+    A->>G: Prečítať všetky verzie z versions
     A->>A: MismatchCheck
     opt Podozrenie na zámenu
         A->>U: Varovanie, predvolené Nie
@@ -98,24 +98,46 @@ flowchart TD
 
 ## Ochrana pred zámenou
 
-`MismatchCheck` pred zápisom vyhodnotí tri pravidlá:
+`MismatchCheck` pred zápisom vyhodnotí päť pravidiel:
 
 1. Číslo na začiatku názvu projektu sa nezhoduje s číselným kľúčom.
 2. `Family` v projekte sa nezhoduje s cieľovým kľúčom. To je možné iba cez `--key`.
-3. Menej ako 50 % zhodných modulov oproti `latest.json`. Modul je dvojica stanica a objednávacie číslo.
+3. Číslo na začiatku názvu nesedí so žiadnym číslom verzií v repozitári. Zachytí „Save as“ pre novú zákazku.
+4. Nový repozitár má názov podobný existujúcemu, pravdepodobne preklep. Číselné kľúče sa vynechávajú.
+5. Menej ako 50 % zhodných modulov voči najbližšej verzii v repozitári. Modul je dvojica stanica a objednávacie číslo. Stačí zhoda s jednou verziou, jedna zákazka môže mať viac verzií používaných naraz.
 
 Add-in ukáže varovanie s predvolenou odpoveďou *Nie*. CLI odmietne zápis bez `--force`.
+
+## Pravidlá zápisu
+
+Verzia, `latest.json` a `README.md` sa zapisujú v jednom commite, zlyhanie nenechá polovičný stav. Pri súbežnom exporte sa zápis až trikrát zopakuje s čerstvými dátami. Zlyhanie tagu SBOM nezruší, používateľ dostane varovanie.
+
+Export sa odmietne, ak má projekt neuložené zmeny alebo neobsahuje hardvér. CLI to dovolí iba s `--force`.
+
+| Stav v repozitári | Výsledok |
+|---|---|
+| Názov ešte neexistuje | Nová verzia |
+| Rovnaký názov a rovnaký obsah | Nič sa nezapíše, používateľ dostane správu |
+| Rovnaký názov, iný obsah | Nová verzia `<názov>_2`, pôvodná sa nemení |
+
+Obsah sa porovnáva podľa `SbomSignature`: verzia TIA, softvér, cesta, objednávacie číslo a firmvér. Čas, autor, cesta k projektu a `serialNumber` sa nepočítajú.
+
+Diakritika sa pri tvorbe názvu odstráni, `Čiara` sa zmení na `Ciara`.
+
+Dlhý názov sa skráti na 100 znakov s krátkym hashom, aby sa dve verzie nezliali.
 
 ## Štruktúra v Gitea
 
 ```text
 sbom/                                  organizácia
 └── <kľúč>/                            jeden repozitár na projekt
-    ├── README.md                      generovaný prehľad
-    ├── latest.json                    posledný SBOM, vstup pre tracker
+    ├── README.md                      generovaný prehľad všetkých verzií
+    ├── latest.json                    naposledy exportovaná verzia, nie celý prehľad
     └── versions/<názov projektu>/
         └── sbom.json                  SBOM jednej verzie projektu
 ```
+
+**Tracker musí čítať všetky `versions/*/sbom.json`.** Súbežne používané verzie sú rozlíšené názvom TIA projektu, `latest.json` obsahuje iba poslednú z nich.
 
 Každá verzia má aj git tag s názvom projektu. Existujúci tag sa neprepisuje. Známy dôsledok opakovaného exportu je v [06-kod.md](06-kod.md#známe-problémy-a-vylepšenia).
 

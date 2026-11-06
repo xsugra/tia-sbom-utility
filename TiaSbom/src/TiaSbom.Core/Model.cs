@@ -75,6 +75,10 @@ namespace TiaSbom.Core
         public string Family { get; set; }
         /// <summary>TIA Portal version of the project, not the Openness API version — see <see cref="TiaBuild"/>.</summary>
         public string TiaVersion { get; set; } = SbomBuilder.Unknown;
+        /// <summary>The open project differs from the stored one, so the SBOM would describe a state nobody can reproduce.</summary>
+        public bool HasUnsavedChanges { get; set; }
+        /// <summary>False for multiuser sessions: UsedProducts exists only on single-user projects, the list is then incomplete.</summary>
+        public bool UsedProductsRead { get; set; }
         /// <summary>False when this API cannot read unplugged modules, so the SBOM may be incomplete for them.</summary>
         public bool UnpluggedItemsRead { get; set; }
         public string ExportedBy { get; set; } = Environment.UserName;
