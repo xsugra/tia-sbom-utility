@@ -21,10 +21,15 @@ namespace TiaSbom.Core
         /// <summary>
         /// False for items without a real product identity, e.g. the S7-1200 rack: order number "Rack",
         /// type "System:Rack.S71200". System items with a real order number (SCALANCE) are products.
+        /// A GSD device access point is always a product: some GSDML files give it no order number (Festo CMMT-ST).
         /// </summary>
         public bool IsProduct =>
-            !string.IsNullOrWhiteSpace(OrderNumber) &&
-            (TypeIdentifier == null || !TypeIdentifier.StartsWith("System:") || OrderNumber.Any(char.IsDigit));
+            IsGsdDeviceAccessPoint ||
+            (!string.IsNullOrWhiteSpace(OrderNumber) &&
+             (TypeIdentifier == null || !TypeIdentifier.StartsWith("System:") || OrderNumber.Any(char.IsDigit)));
+
+        private bool IsGsdDeviceAccessPoint =>
+            TypeIdentifier != null && TypeIdentifier.StartsWith("GSD:") && TypeIdentifier.Contains("/DAP/");
 
         /// <summary>HMI panels report no TypeName, and their item name ("HMI_1") says nothing about the product.</summary>
         public string ProductName =>

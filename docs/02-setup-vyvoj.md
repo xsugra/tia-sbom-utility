@@ -40,16 +40,14 @@ Spustite vo VM v PowerShelli ako správca:
 
 ```powershell
 winget install --id Microsoft.DotNet.SDK.8 -e --accept-package-agreements --accept-source-agreements
-winget install --id Microsoft.DotNet.Framework.DeveloperPack_4 -e --accept-package-agreements --accept-source-agreements
 ```
 
-Ak `winget` vo VM chýba, nainštalujte z webu Microsoftu **.NET SDK** a **.NET Framework 4.8 Developer Pack**. Pre build V16 treba aj **4.6.2 Developer Pack**. Git ani Visual Studio netreba.
+.NET SDK si pri preklade stiahne referenčné zostavenia `net48` z NuGetu, ak chýba Developer Pack. Overené na VM s V19, ktorá má iba `v4.8.1`. Do výstupu sa nedostanú, vyžadujú však internet pri prvom builde. Bez internetu nainštalujte **.NET Framework 4.8 Developer Pack** z `https://dotnet.microsoft.com/download/dotnet-framework/net48`. Balík `winget` `Microsoft.DotNet.Framework.DeveloperPack_4` inštaluje 4.8.1, nie 4.8. Git ani Visual Studio netreba.
 
 Po inštalácii otvorte nové okno PowerShellu a overte:
 
 ```powershell
 dotnet --list-sdks
-Test-Path 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8'
 ```
 
 ### 3. Skupina Openness
@@ -69,7 +67,7 @@ whoami /groups | Select-String "Openness"
 Vo VM otvorte v prehliadači, prihlásený na GitHube, tento odkaz na vetvu:
 
 ```text
-https://github.com/xsugra/tia-sbom-utility/archive/refs/heads/feat/multi-version-tia.zip
+https://github.com/xsugra/tia-sbom-utility/archive/refs/heads/main.zip
 ```
 
 Rozbaľte ho:
@@ -88,7 +86,7 @@ Priečinok závisí od vetvy: `tia-sbom-utility-main` alebo `tia-sbom-utility-fe
 **Over verziu pred buildom:**
 
 ```powershell
-cd C:\Code\tia-sbom-utility-feat-multi-version-tia\TiaSbom
+cd C:\Code\tia-sbom-utility-main\TiaSbom
 Select-String -Path .\src\TiaSbom.AddIn\AddInPublisherConfig.V17.xml -Pattern '<Version>'
 ```
 
@@ -98,7 +96,8 @@ Select-String -Path .\src\TiaSbom.AddIn\AddInPublisherConfig.V17.xml -Pattern '<
 |---|---|
 | V17 | `.\build.ps1 -Api V17 -AddIn` |
 | V21 | `.\build.ps1 -Api V21 -AddIn` |
-| V18 až V20 | `.\build.ps1 -Api V17 -Portal V19 -AddIn`, podľa [testov](07-testovanie-verzii.md) |
+| V19 | CLI: `.\build.ps1 -Api V17 -Portal V19`, add-in: `.\build.ps1 -Api V19 -AddIn` |
+| V18, V20 | CLI: `.\build.ps1 -Api V17 -Portal V20`, add-in podľa [testov](07-testovanie-verzii.md) |
 | V16 | `.\build.ps1 -Api V16`, add-in zatiaľ nie je |
 
 Spustenie, ak je zablokované vykonávanie skriptov:

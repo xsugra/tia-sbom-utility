@@ -33,6 +33,8 @@ Get-Content "$env:APPDATA\TiaSbom\addin.log" -Tail 30
 | `CS0433` duplicitné typy | Pred V21 sa bije Add-In API so `Siemens.Engineering.dll` | Odkazovať len Add-In API, pozri [kód](06-kod.md#závislosti-projektov) |
 | Publisher: `SbomContextMenu should be public` | Interný typ | Typy odvodené z `AddIn` musia byť `public` |
 | `dotnet` sa nenašiel | Starý `PATH` | Otvoriť nové okno PowerShellu |
+| `MSB3644`, chýba `v4.8` | Chýbajú referenčné zostavenia a NuGet nie je dostupný | Povoliť internet pri builde alebo nainštalovať .NET Framework 4.8 Developer Pack |
+| V `src` chýba `TiaSbom.AddIn` | Stará kópia kódu | Stiahnuť ZIP z `main` a skontrolovať `<Version>` |
 | Chyba pri buildovaní zo zlej cesty | Priečinok `src` namiesto `TiaSbom` | Spustiť z `TiaSbom` |
 
 ## Add-in
