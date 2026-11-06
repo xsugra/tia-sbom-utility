@@ -8,6 +8,7 @@ Inštalátor nasadí add-in pre každú verziu TIA nájdenú na počítači a za
 | `TiaSbom/deploy/install.cmd` | Spustenie bez ohľadu na Execution Policy |
 | `TiaSbom/deploy/tiasbom.env.example` | Šablóna nastavení |
 | `TiaSbom/deploy/package.ps1` | Zloženie balíka pre nasadenie |
+| `TiaSbom/deploy/update-vm.cmd` | Iba vývoj, rýchla aktualizácia VM |
 
 ## Stav overenia
 

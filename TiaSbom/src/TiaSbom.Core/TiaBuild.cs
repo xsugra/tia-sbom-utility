@@ -12,12 +12,16 @@ namespace TiaSbom.Core
         public const string Api = "V16";
 #elif TIA_API_V17
         public const string Api = "V17";
+#elif TIA_API_V18
+        public const string Api = "V18";
 #elif TIA_API_V19
         public const string Api = "V19";
+#elif TIA_API_V20
+        public const string Api = "V20";
 #elif TIA_API_V21
         public const string Api = "V21";
 #else
-#error Unsupported TiaApi. Supported values: V16, V17, V19, V21.
+#error Unsupported TiaApi. Supported values: V16, V17, V18, V19, V20, V21.
 #endif
 
         /// <summary>

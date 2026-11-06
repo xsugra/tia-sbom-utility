@@ -166,7 +166,7 @@ Jeden zdrojový kód, jeden build na Openness API:
 |---|---|---|---|
 | `V16` | V16 až V19 | 4.6.2 | CLI, zatiaľ nezostavené |
 | `V17` | V17 až V20 | 4.8 | CLI aj add-in |
-| `V19` | V19 | 4.8 | add-in pre V19, publisher je iba vo `V19.AddIn` |
+| `V18`, `V19`, `V20` | iba vlastná verzia | 4.8 | add-in. Publisher je overene vo `V19.AddIn`, V18 a V20 sa testujú |
 | `V21` | iba V21 | 4.8 | CLI aj add-in, modulárne DLL |
 
 Podrobnosti a testy sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).

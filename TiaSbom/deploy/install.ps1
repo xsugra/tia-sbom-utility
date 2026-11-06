@@ -25,7 +25,7 @@ $ErrorActionPreference = 'Stop'
 if (-not $EnvFile) { $EnvFile = Join-Path $PSScriptRoot 'tiasbom.env' }
 
 # TIA versions with their own Add-In build. Others are reported, never served with a package of another version.
-$BuildableVersions = 17, 19, 21
+$BuildableVersions = 17, 18, 19, 20, 21
 $KnownKeys = 'TIA_ROOT', 'GITEA_BASE_URL', 'GITEA_OWNER', 'GITEA_BRANCH', 'GITEA_PRIVATE_REPOS',
              'GITEA_TIMEOUT_SECONDS', 'GITEA_TOKEN', 'OPENNESS_MEMBERS'
 $OpennessGroup = 'Siemens TIA Openness'

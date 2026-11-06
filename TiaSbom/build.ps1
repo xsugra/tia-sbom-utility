@@ -5,11 +5,11 @@
     .\build.ps1 -Api V17 -Portal V19      use the V17 API shipped with TIA V19
     .\build.ps1 -Api V17 -AddIn           also build and package the Add-In
 
-  API V16 runs on TIA V16-V19, V17 on V17-V20, V19 on V19 only for now, V21 on V21 only.
-  The Add-In needs the publisher of its own TIA version: use -Api V19 on TIA V19.
+  API V16 runs on TIA V16-V19, V17 on V17-V20, V21 on V21 only. V18, V19 and V20 exist for the Add-In.
+  The Add-In needs the publisher of its own TIA version: use -Api V19 on TIA V19, and so on.
 #>
 param(
-    [ValidateSet('V16', 'V17', 'V19', 'V21')][string]$Api = 'V21',
+    [ValidateSet('V16', 'V17', 'V18', 'V19', 'V20', 'V21')][string]$Api = 'V21',
     [string]$Portal = $Api,
     [string]$Configuration = 'Release',
     [switch]$AddIn

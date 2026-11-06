@@ -35,7 +35,7 @@ TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je ov
 
 Úplný zoznam je v [06-kod.md](06-kod.md#známe-problémy-a-vylepšenia). Najdôležitejšie:
 
-1. Zmeny v 0.2.10 (pravidlá zápisu, atomický upload, opakovanie, zrozumiteľné chyby) ešte neboli preložené ani spustené na TIA. `IsModified` nie je v neúplnej dokumentácii V20 potvrdené.
+1. Verzia 0.2.10-rc1 je na V17, V19 a V21 overená v hlavných scenároch. Na V21 sa raz stalo, že okno s hláškou ostalo nevidieť, nezopakovalo sa to. `IsModified` nie je v neúplnej dokumentácii V20 potvrdené.
 2. `IV3-XXXX` a podobné záznamy z GSDML nie sú skutočný model a ich „firmvér“ je verzia popisu, nie zariadenia.
 3. Chýba mapovanie objednávacích čísel na CPE, tracker ho bude potrebovať.
 4. SBOM obsahuje hardvér a použité inžinierske produkty, nie knižnice ani bloky PLC.
@@ -58,8 +58,8 @@ TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je ov
 
 ## Ďalšie kroky
 
-1. Otestovať V18, V20 a V16 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md) a overiť 0.2.7 na V17 a V21.
-2. Prejsť testy výnimiek v [07-testovanie-verzii.md](07-testovanie-verzii.md#testy-výnimiek).
+1. Otestovať V18 a V20 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md).
+2. Dokončiť testy výnimiek v [07-testovanie-verzii.md](07-testovanie-verzii.md#testy-výnimiek).
 3. Overiť inštalátor a aktiváciu add-inu na skutočnom TIA podľa [09-instalacia.md](09-instalacia.md).
 4. Pripraviť produkčný server a zálohy podľa [04-produkcia.md](04-produkcia.md).
 
@@ -70,3 +70,4 @@ TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je ov
 | 2026-10-29 | Prvý export z V21 do Gitea, add-in, automatické repozitáre a ochrana pred zámenou |
 | 2026-11-05 | Add-in funguje na V17 v sandboxe a na V21, panely HMI v SBOM |
 | 2026-11-06 | Dokumentácia a pravidlá projektu, add-in overený na V19 |
+| 2026-11-06 | Atomický zápis a súbežné verzie overené na V19, 0.2.10-rc1 |
