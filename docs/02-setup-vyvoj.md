@@ -96,8 +96,7 @@ Select-String -Path .\src\TiaSbom.AddIn\AddInPublisherConfig.V17.xml -Pattern '<
 |---|---|
 | V17 | `.\build.ps1 -Api V17 -AddIn` |
 | V21 | `.\build.ps1 -Api V21 -AddIn` |
-| V19 | CLI: `.\build.ps1 -Api V17 -Portal V19`, add-in: `.\build.ps1 -Api V19 -AddIn` |
-| V18, V20 | CLI: `.\build.ps1 -Api V17 -Portal V20`, add-in podľa [testov](07-testovanie-verzii.md) |
+| V18, V19, V20 | CLI: `.\build.ps1 -Api V17 -Portal V19`, add-in: `.\build.ps1 -Api V19 -AddIn`, číslo podľa verzie TIA |
 | V16 | `.\build.ps1 -Api V16`, add-in zatiaľ nie je |
 
 Spustenie, ak je zablokované vykonávanie skriptov:
@@ -204,6 +203,23 @@ Get-Content "$env:APPDATA\TiaSbom\addin.log" -Tail 30
 ```
 
 Log neobsahuje token. Ak chýba úplne, nebeží nový add-in.
+
+## Rýchla aktualizácia VM
+
+Pri vývoji stačí jeden skript. ZIP sťahujete v prehliadači, repozitár je súkromný.
+
+1. Stiahnite ZIP vetvy v prehliadači vo VM.
+2. Dvakrát kliknite na `C:\Code\update-vm.cmd`.
+
+Skript rozbalí najnovší ZIP, odmietne ZIP starší ako hodina, nájde Gitea podľa brány VM, nastaví `tiasbom.env`, spustí build a nasadí add-in. Pri chybe napíše `FAILED` a dôvod. Bežiaca TIA run zastaví.
+
+Výpis logov po testoch:
+
+```powershell
+C:\Code\update-vm.cmd -Report
+```
+
+Prvýkrát na novej VM treba ZIP rozbaliť ručne a spustiť `TiaSbom\deploy\update-vm.cmd`. Skript sa sám skopíruje do `C:\Code`.
 
 ## Práca s vetvami
 

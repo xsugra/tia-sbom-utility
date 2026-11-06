@@ -45,6 +45,7 @@ Podrobnosti sú v [docs/05-bezpecnost.md](docs/05-bezpecnost.md).
 - `main` sa pushuje až po overení na TIA a so súhlasom používateľa. Pred pushom over vetvu.
 - Stageuj konkrétne súbory a commituj s pathspec: `git commit -- <súbory>`. Index môže obsahovať zmeny používateľa.
 - Správa commitu je anglicky a vysvetľuje prečo. Remote sa volá `tia-sbom-utility`, nie `origin`.
+- Tagy: `vX.Y.Z` iba pre verziu overenú na TIA, `vX.Y.Z-rcN` pre neoverenú. Číslo zodpovedá `<Version>` add-inu. Tag je anotovaný, v správe uvádza overené verzie TIA a existujúci tag sa neprepisuje.
 
 ## Kód
 

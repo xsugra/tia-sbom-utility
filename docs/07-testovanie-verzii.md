@@ -8,9 +8,9 @@ Cieľ: pred produkciou overiť každú používanú verziu na skutočnej inštal
 |---|---|---|---|---|---|
 | V16 | V14 SP1, V15, V15.1, V16 | `V16` | nie je | 4.6.2 | ☐ neotestované |
 | V17 | V15, V15.1, V16, V17 | `V17` | `V17` | 4.8 | ✅ overené |
-| V18 | V15.1 až V18 | `V17` | neznáme | 4.8 | ☐ neotestované |
+| V18 | V15.1 až V18 | `V17` | `V18`, pripravené | 4.8 | ☐ neotestované |
 | V19 | V16 až V19 | `V17` | `V19` | 4.8 | ✅ overené |
-| V20 | V17 až V20 | `V17` | neznáme | 4.8 | ☐ neotestované |
+| V20 | V17 až V20 | `V17` | `V20`, pripravené | 4.8 | ☐ neotestované |
 | V21 | V21 | `V21` | `V21` | 4.8 | ✅ overené |
 
 API tabuľka vychádza z dokumentácie Openness 2019 až 2023 a z priečinkov overených vo V17 a V21. **Kompatibilita add-inu medzi verziami v dostupnej dokumentácii nie je opísaná.** Add-in preto treba otestovať na každej verzii.
@@ -145,6 +145,9 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 
 ### TIA V21, overené
 
+0.2.10-rc1, 2026-11-06: `install.ps1 -Build` OK, starý `TiaSbom.addin` nahradený za `TiaSbom.V21.addin`, export do Gitea OK, používateľ potvrdil funkčnosť. Pri teste sa add-in raz zdal zaseknutý na hláške, príčina nie je potvrdená.
+
+
 | Položka | Výsledok |
 |---|---|
 | Dátum, add-in | 2026-11-05, 0.2.6 |
@@ -155,6 +158,9 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 | Neoverené | multiuser, varovanie o zámene s novým kódom, zlyhanie tokenu |
 
 ### TIA V17, overené
+
+0.2.10-rc1, 2026-11-06: `install.ps1 -Build` OK, sandbox OK, uložený token sa prečítal, rovnaký obsah sa nezapíše, tri verzie jednej zákazky sú oddelené, jeden commit na export. Neoverené: neuložený projekt, `<názov>_2`, zlý token.
+
 
 | Položka | Výsledok |
 |---|---|
@@ -186,7 +192,8 @@ Prebieha, začiatok 2026-11-06.
 | Dôvera | `fullTrust=False`, sandbox |
 | Okná a čítanie | Dialóg tokenu, chybové okno a prečítanie projektu OK |
 | Upload | OK, 2026-11-06, add-in 0.2.7 vytvoril nový repozitár, výsledok overený v Gitea |
-| Neoverené | multiuser, vyplnené `Family`, varovanie o zámene, zlyhanie tokenu |
+| 0.2.10-rc1, 2026-11-06 | `install.ps1 -Build` OK. Rovnaký obsah sa nezapíše, neuložený projekt sa odmietne, tri verzie jednej zákazky sú oddelené, jeden export je jeden commit, tagy aj README sedia |
+| Neoverené | `<názov>_2`, „Save as“, výpadok siete, archivovaný repozitár, zlý token, súbežný export, multiuser, vyplnené `Family` |
 | Schéma | Namespace `.../Publisher/V19`, dovoľuje `SecurityPermissions` aj `UnrestrictedPermissions` |
 | Add-in | `-Api V19 -AddIn`, 0.2.7, balík sa aktivuje a beží |
 
@@ -194,7 +201,7 @@ Pozornosť: `Device.UnpluggedItems` je od V19 dokumentované.
 
 ### TIA V20
 
-Neotestované. Pozornosť: najnovší build, ktorý ešte podporuje API V17.
+Neotestované. Pripravené `-Api V20` a `AddInPublisherConfig.V20.xml`, odvodené od V19. Schéma V20 ešte nebola skontrolovaná.
 
 ### TIA V16
 
