@@ -51,6 +51,11 @@ namespace TiaSbom.Cli
 
             if (upload)
             {
+                var problems = ExportGuard.Problems(snapshot);
+                foreach (string problem in problems) Console.Error.WriteLine("WARNING: " + problem);
+                if (problems.Count > 0 && !Has(args, "--force"))
+                    throw new InvalidOperationException("Refusing to upload this snapshot. Use --force to override.");
+
                 // --key overrides; otherwise the TIA project property "Family" is the project key.
                 string key = ProjectKey.Normalize(Value(args, "--key") ?? snapshot.Family)
                     ?? throw new InvalidOperationException(
@@ -64,14 +69,22 @@ namespace TiaSbom.Cli
 
                 using (var gitea = new GiteaClient(settings, token))
                 {
-                    var warnings = MismatchCheck.Evaluate(key, snapshot, gitea.GetPreviousAsync(key).GetAwaiter().GetResult());
+                    var repositories = gitea.ListReposAsync().GetAwaiter().GetResult();
+                    var versions = gitea.GetVersionsAsync(key).GetAwaiter().GetResult();
+                    var warnings = MismatchCheck.Evaluate(key, snapshot, versions, repositories);
                     foreach (string w in warnings) Console.Error.WriteLine("WARNING: " + w);
                     if (warnings.Count > 0 && !Has(args, "--force"))
                         throw new InvalidOperationException($"Refusing to upload to '{key}' — looks like a different project. Use --force to override.");
 
-                    string url = gitea.UploadSbomAsync(key, ProjectKey.VersionName(snapshot.ProjectName), snapshot.ProjectName,
-                        json, Readme.Build(key, snapshot)).GetAwaiter().GetResult();
-                    Console.WriteLine($"Uploaded to '{key}': " + (url ?? "(no commit URL returned)"));
+                    PublishResult result = SbomPublisher.PublishAsync(gitea, key, snapshot, json).GetAwaiter().GetResult();
+                    if (result.AlreadyStored)
+                    {
+                        Console.WriteLine($"Already stored in '{key}' as '{result.VersionName}'. Nothing was changed.");
+                        return 0;
+                    }
+
+                    if (result.TagProblem != null) Console.Error.WriteLine("WARNING: " + result.TagProblem);
+                    Console.WriteLine($"Uploaded to '{key}' as '{result.VersionName}': " + (result.Url ?? "(no commit URL returned)"));
                 }
             }
             return 0;

@@ -12,8 +12,8 @@ namespace TiaSbom.Gitea
     /// <summary>
     /// Talks to the Gitea REST API — no git.exe needed on the engineering PC.
     /// Layout per project key (= repository in the configured organization):
-    ///   README.md                         generated summary
-    ///   latest.json                       last exported SBOM (input for the vulnerability tracker)
+    ///   README.md                         generated overview of all versions
+    ///   latest.json                       most recently exported version only
     ///   versions/&lt;project name&gt;/sbom.json  one folder + git tag per TIA project version
     /// </summary>
     public sealed class GiteaClient : IDisposable
@@ -42,54 +42,150 @@ namespace TiaSbom.Gitea
         }
 
         /// <summary>
-        /// Creates the repository if needed, stores the SBOM (version folder + latest.json + README) and tags the version.
+        /// Creates the repository if needed, stores the SBOM, latest.json and README in one commit, so a failure leaves
+        /// no half-written version, and tags the version.
         /// <paramref name="repo"/> and <paramref name="version"/> must already be normalized (see TiaSbom.Core.ProjectKey).
-        /// Returns the web URL of the version commit.
         /// </summary>
-        public async Task<string> UploadSbomAsync(string repo, string version, string projectName, string json, string readme)
+        public async Task<UploadResult> UploadSbomAsync(string repo, string version, string projectName, string json, string readme)
         {
             await EnsureRepoAsync(repo, $"SBOM archive for project {repo}").ConfigureAwait(false);
 
             string message = $"SBOM {projectName} ({Environment.UserName}@{Environment.MachineName})";
-            Commit commit = await PutFileAsync(repo, $"versions/{version}/sbom.json", json, message).ConfigureAwait(false);
-            await PutFileAsync(repo, "latest.json", json, message + " [latest]").ConfigureAwait(false);
-            await PutFileAsync(repo, "README.md", readme, "Update README").ConfigureAwait(false);
-            await TryCreateTagAsync(repo, version, commit.Sha, message).ConfigureAwait(false);
-            return commit.Url;
+            var body = new Core.JsonObject
+            {
+                { "branch", _settings.Branch },
+                { "message", message },
+                { "files", new List<object>
+                    {
+                        await FileChangeAsync(repo, $"versions/{version}/sbom.json", json).ConfigureAwait(false),
+                        await FileChangeAsync(repo, "latest.json", json).ConfigureAwait(false),
+                        await FileChangeAsync(repo, "README.md", readme).ConfigureAwait(false),
+                    }
+                },
+            };
+
+            using (var response = await _http.PostAsync($"{RepoUri(repo)}/contents", JsonContent(body)).ConfigureAwait(false))
+            {
+                if (!response.IsSuccessStatusCode) await ThrowAsync(response, "write version " + version).ConfigureAwait(false);
+
+                var commit = Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))?.Get("commit") as Dictionary<string, object>;
+                string sha = commit?.Get("sha") as string;
+                return new UploadResult
+                {
+                    Url = commit?.Get("html_url") as string,
+                    TagProblem = await TryCreateTagAsync(repo, version, sha, message).ConfigureAwait(false),
+                };
+            }
+        }
+
+        private async Task<Core.JsonObject> FileChangeAsync(string repo, string repoPath, string content)
+        {
+            string sha = await GetShaAsync(repo, repoPath).ConfigureAwait(false);
+            return new Core.JsonObject
+            {
+                { "operation", sha == null ? "create" : "update" },
+                { "path", repoPath },
+                { "content", Convert.ToBase64String(Encoding.UTF8.GetBytes(content)) },
+                { "sha", sha },                    // skipped when null (new file)
+            };
         }
 
         /// <summary>
-        /// Summary of the repository's latest.json, for <see cref="Core.MismatchCheck"/>.
-        /// Null when the repository or latest.json does not exist yet (first export).
+        /// Summary of every version in the repository, for <see cref="Core.MismatchCheck"/>, the plan and the README.
+        /// Empty when the repository or the versions folder does not exist yet (first export).
         /// </summary>
-        public async Task<Core.PreviousSbom> GetPreviousAsync(string repo)
+        public async Task<List<Core.PreviousSbom>> GetVersionsAsync(string repo)
         {
-            using (var response = await _http.GetAsync(ContentsUri(repo, "latest.json") + "?ref=" + Uri.EscapeDataString(_settings.Branch)).ConfigureAwait(false))
+            var versions = new List<Core.PreviousSbom>();
+            string listing = await GetContentsAsync(repo, "versions").ConfigureAwait(false);
+            if (listing == null) return versions;
+
+            foreach (var entry in Core.Json.Parse(listing) as List<object> ?? new List<object>())
+            {
+                var folder = entry as Dictionary<string, object>;
+                if (folder?.Get("type") as string != "dir" || !(folder.Get("name") is string name)) continue;
+
+                string text = await GetFileTextAsync(repo, $"versions/{name}/sbom.json").ConfigureAwait(false);
+                if (text == null) continue;
+
+                Core.PreviousSbom version = ReadVersion(name, text)
+                    ?? throw new InvalidOperationException($"versions/{name}/sbom.json in {repo} is not a valid SBOM.");
+                if (DateTimeOffset.TryParse(folder.Get("last_committer_date") as string, out DateTimeOffset storedAt))
+                    version.StoredAt = storedAt;
+                versions.Add(version);
+            }
+            return versions;
+        }
+
+        /// <summary>The Contents API leaves out the content of large files, those come from the raw endpoint.</summary>
+        private async Task<string> GetFileTextAsync(string repo, string repoPath)
+        {
+            string contents = await GetContentsAsync(repo, repoPath).ConfigureAwait(false);
+            if (contents == null) return null;
+
+            if (Parse(contents)?.Get("content") is string base64 && base64.Length > 0)
+                return Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+
+            using (var response = await _http.GetAsync($"{RepoUri(repo)}/raw/{EscPath(repoPath)}?ref={Esc(_settings.Branch)}").ConfigureAwait(false))
+            {
+                if (!response.IsSuccessStatusCode) await ThrowAsync(response, $"read {repoPath} in {repo}").ConfigureAwait(false);
+                return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>JSON of the Contents API, null when the path does not exist.</summary>
+        private async Task<string> GetContentsAsync(string repo, string repoPath)
+        {
+            using (var response = await _http.GetAsync($"{RepoUri(repo)}/contents/{EscPath(repoPath)}?ref={Esc(_settings.Branch)}").ConfigureAwait(false))
             {
                 if (response.StatusCode == HttpStatusCode.NotFound) return null;
-                if (!response.IsSuccessStatusCode) await ThrowAsync(response, "read latest.json in " + repo).ConfigureAwait(false);
-
-                string base64 = Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))?.Get("content") as string;
-                if (string.IsNullOrEmpty(base64)) return null;
-                var bom = Parse(Encoding.UTF8.GetString(Convert.FromBase64String(base64)));
-                if (bom == null) return null;
-
-                var metadata = bom.Get("metadata") as Dictionary<string, object>;
-                var project = metadata?.Get("component") as Dictionary<string, object>;
-                var previous = new Core.PreviousSbom
-                {
-                    ProjectName = project?.Get("name") as string,
-                    Timestamp = metadata?.Get("timestamp") as string,
-                    ExportedBy = Property(project, "tia:exportedBy"),
-                };
-                foreach (var component in (bom.Get("components") as IEnumerable) ?? new object[0])
-                {
-                    var c = component as Dictionary<string, object>;
-                    string order = Property(c, "siemens:orderNumber");
-                    if (order != null) previous.Fingerprints.Add(Core.MismatchCheck.Fingerprint(Property(c, "tia:station"), order));
-                }
-                return previous;
+                if (!response.IsSuccessStatusCode) await ThrowAsync(response, $"read {repoPath} in {repo}").ConfigureAwait(false);
+                return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
+        }
+
+        private static Core.PreviousSbom ReadVersion(string versionName, string sbomJson)
+        {
+            var bom = Parse(sbomJson);
+            if (bom == null) return null;
+
+            var metadata = bom.Get("metadata") as Dictionary<string, object>;
+            var project = metadata?.Get("component") as Dictionary<string, object>;
+            var version = new Core.PreviousSbom
+            {
+                VersionName = versionName,
+                ProjectName = project?.Get("name") as string,
+                TiaVersion = Property(project, "tia:version"),
+                Timestamp = metadata?.Get("timestamp") as string,
+                ExportedBy = Property(project, "tia:exportedBy"),
+            };
+            var signature = new List<string> { Core.SbomSignature.Tia(version.TiaVersion) };
+            foreach (var component in (bom.Get("components") as IEnumerable) ?? new object[0])
+            {
+                var c = component as Dictionary<string, object>;
+                string type = c?.Get("type") as string;
+                if (type == "application")
+                {
+                    signature.Add(Core.SbomSignature.Software(c.Get("name") as string, c.Get("version") as string));
+                }
+                else if (type == "device")
+                {
+                    string order = Property(c, "siemens:orderNumber");
+                    version.ModuleCount++;
+                    version.Fingerprints.Add(Core.MismatchCheck.Fingerprint(Property(c, "tia:station"), order));
+                    signature.Add(Core.SbomSignature.Hardware(Property(c, "tia:path"), order, FirmwareOf(c)));
+                }
+            }
+            version.Signature = Core.SbomSignature.Join(signature);
+            return version;
+        }
+
+        private static string FirmwareOf(Dictionary<string, object> device)
+        {
+            foreach (var child in (device.Get("components") as IEnumerable) ?? new object[0])
+                if (child is Dictionary<string, object> c && c.Get("type") as string == "firmware")
+                    return c.Get("version") as string;
+            return null;
         }
 
         private static string Property(Dictionary<string, object> component, string name)
@@ -122,9 +218,15 @@ namespace TiaSbom.Gitea
 
         public async Task EnsureRepoAsync(string repo, string description)
         {
-            using (var response = await _http.GetAsync($"repos/{Esc(_settings.Owner)}/{Esc(repo)}").ConfigureAwait(false))
+            using (var response = await _http.GetAsync(RepoUri(repo)).ConfigureAwait(false))
             {
-                if (response.IsSuccessStatusCode) return;
+                if (response.IsSuccessStatusCode)
+                {
+                    // A finished job is archived on purpose: a new version needs a human decision, not a failed write.
+                    if (Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))?.Get("archived") is bool archived && archived)
+                        throw new InvalidOperationException($"Gitea project '{repo}' is archived and read-only. Ask an administrator to unarchive it.");
+                    return;
+                }
                 if (response.StatusCode != HttpStatusCode.NotFound) await ThrowAsync(response, "read repository " + repo).ConfigureAwait(false);
             }
 
@@ -144,50 +246,24 @@ namespace TiaSbom.Gitea
             }
         }
 
-        public async Task<Commit> PutFileAsync(string repo, string repoPath, string content, string message)
+        /// <summary>Tags the version commit. Returns the problem as text: the SBOM is already stored at this point.</summary>
+        private async Task<string> TryCreateTagAsync(string repo, string tag, string targetSha, string message)
         {
-            string sha = await GetShaAsync(repo, repoPath).ConfigureAwait(false);
-            var body = new Core.JsonObject
-            {
-                { "content", Convert.ToBase64String(Encoding.UTF8.GetBytes(content)) },
-                { "message", message },
-                { "branch", _settings.Branch },
-                { "sha", sha },                    // skipped when null (new file)
-            };
+            if (targetSha == null) return $"Gitea returned no commit, tag '{tag}' was not created.";
 
-            var request = new HttpRequestMessage(sha == null ? HttpMethod.Post : HttpMethod.Put, ContentsUri(repo, repoPath))
-            {
-                Content = JsonContent(body),
-            };
-            using (var response = await _http.SendAsync(request).ConfigureAwait(false))
-            {
-                if (!response.IsSuccessStatusCode) await ThrowAsync(response, "write " + repoPath).ConfigureAwait(false);
-                var commit = Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))?.Get("commit") as Dictionary<string, object>;
-                return new Commit { Sha = commit?.Get("sha") as string, Url = commit?.Get("html_url") as string };
-            }
-        }
-
-        /// <summary>Tags the version commit. An existing tag (same version exported again) is kept as the first release marker.</summary>
-        private async Task TryCreateTagAsync(string repo, string tag, string targetSha, string message)
-        {
-            if (targetSha == null) return;
             var body = new Core.JsonObject { { "tag_name", tag }, { "target", targetSha }, { "message", message } };
-            using (var response = await _http.PostAsync($"repos/{Esc(_settings.Owner)}/{Esc(repo)}/tags", JsonContent(body)).ConfigureAwait(false))
+            using (var response = await _http.PostAsync($"{RepoUri(repo)}/tags", JsonContent(body)).ConfigureAwait(false))
             {
-                if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.Conflict
-                    && (int)response.StatusCode != 422)
-                    await ThrowAsync(response, "create tag " + tag).ConfigureAwait(false);
+                if (response.IsSuccessStatusCode) return null;
+                string text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return $"Tag '{tag}' was not created: {(int)response.StatusCode} {text}";
             }
         }
 
         private async Task<string> GetShaAsync(string repo, string repoPath)
         {
-            using (var response = await _http.GetAsync(ContentsUri(repo, repoPath) + "?ref=" + Uri.EscapeDataString(_settings.Branch)).ConfigureAwait(false))
-            {
-                if (response.StatusCode == HttpStatusCode.NotFound) return null;
-                if (!response.IsSuccessStatusCode) await ThrowAsync(response, "read " + repoPath).ConfigureAwait(false);
-                return Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))?.Get("sha") as string;
-            }
+            string contents = await GetContentsAsync(repo, repoPath).ConfigureAwait(false);
+            return contents == null ? null : Parse(contents)?.Get("sha") as string;
         }
 
         private async Task<string> GetStringAsync(string uri)
@@ -205,8 +281,10 @@ namespace TiaSbom.Gitea
             throw new GiteaException(response.StatusCode, $"Gitea: cannot {action}: {(int)response.StatusCode} {text}");
         }
 
-        private string ContentsUri(string repo, string repoPath) =>
-            $"repos/{Esc(_settings.Owner)}/{Esc(repo)}/contents/{string.Join("/", Array.ConvertAll(repoPath.Split('/'), Uri.EscapeDataString))}";
+        private string RepoUri(string repo) => $"repos/{Esc(_settings.Owner)}/{Esc(repo)}";
+
+        private static string EscPath(string repoPath) =>
+            string.Join("/", Array.ConvertAll(repoPath.Split('/'), Uri.EscapeDataString));
 
         private static string Esc(string s) => Uri.EscapeDataString(s);
 
@@ -217,12 +295,13 @@ namespace TiaSbom.Gitea
             Core.Json.Parse(json) as Dictionary<string, object>;
 
         public void Dispose() => _http.Dispose();
+    }
 
-        public sealed class Commit
-        {
-            public string Sha { get; set; }
-            public string Url { get; set; }
-        }
+    public sealed class UploadResult
+    {
+        public string Url { get; set; }
+        /// <summary>Null when the tag exists. The SBOM is stored either way.</summary>
+        public string TagProblem { get; set; }
     }
 
     internal static class DictionaryExtensions
@@ -233,8 +312,20 @@ namespace TiaSbom.Gitea
 
     public sealed class GiteaException : Exception
     {
+        private const int UnprocessableEntity = 422;
+
         public HttpStatusCode StatusCode { get; }
         public GiteaException(HttpStatusCode status, string message) : base(message) { StatusCode = status; }
-        public bool IsAuthError => StatusCode == HttpStatusCode.Unauthorized || StatusCode == HttpStatusCode.Forbidden;
+
+        /// <summary>
+        /// 403 alone proves nothing about the token, Gitea also uses it for repository rules. A valid personal token
+        /// must not be deleted because of them, so only its own message counts.
+        /// </summary>
+        public bool IsAuthError =>
+            StatusCode == HttpStatusCode.Unauthorized ||
+            (StatusCode == HttpStatusCode.Forbidden && Message.IndexOf("token", StringComparison.OrdinalIgnoreCase) >= 0);
+
+        /// <summary>Someone else changed the repository in between, a new attempt with fresh data can succeed.</summary>
+        public bool IsConflict => StatusCode == HttpStatusCode.Conflict || (int)StatusCode == UnprocessableEntity;
     }
 }

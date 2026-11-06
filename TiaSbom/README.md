@@ -50,8 +50,8 @@ Názvy TIA projektov sa líšia a menia s každou verziou, preto je kľúčom vl
   a pripomenie vyplniť Family. Openness V21 vlastnosti projektu zapisovať nevie.
 - CLI: `--key <kľúč>` alebo Family, inak chyba.
 
-**Ochrana pred zámenou** (`MismatchCheck`) – pred uploadom sa porovná export s `latest.json` cieľového repozitára:
-- menej ako 50 % rovnakých modulov (stanica + objednávacie číslo),
+**Ochrana pred zámenou** (`MismatchCheck`) – pred uploadom sa porovná export so všetkými verziami v cieľovom repozitári:
+- menej ako 50 % rovnakých modulov voči najbližšej verzii (stanica + objednávacie číslo),
 - číslo zákazky na začiatku názvu projektu ≠ numerický kľúč,
 - Family v projekte ≠ cieľový kľúč.
 
@@ -62,8 +62,8 @@ Add-in vtedy zobrazí varovanie (predvolené *Nie*), CLI odmietne upload bez `--
 ```
 <Owner>/                         organizácia, napr. "sbom" (všetci čítajú)
 └── <Family>/                    1 repozitár = 1 projekt / zákazka
-    ├── README.md                generovaný prehľad
-    ├── latest.json              posledný SBOM (vstup pre tracker)
+    ├── README.md                generovaný prehľad všetkých verzií
+    ├── latest.json              naposledy exportovaná verzia, nie celý prehľad
     └── versions/<názov projektu>/sbom.json   + git tag <názov projektu>
 ```
 

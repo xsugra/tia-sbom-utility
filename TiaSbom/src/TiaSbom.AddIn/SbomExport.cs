@@ -26,9 +26,11 @@ namespace TiaSbom.AddIn
         {
             Log.WriteEnvironment();
             bool tokenFromConfig = false;
+            string giteaUrl = null;
             try
             {
                 GiteaSettings settings = GiteaSettings.Load();
+                giteaUrl = settings.BaseUrl;
                 Log.Write($"Config loaded: {settings.BaseUrl}, owner {settings.Owner}");
 
                 string token = settings.Token;
@@ -57,16 +59,24 @@ namespace TiaSbom.AddIn
                 }
                 Log.Write($"Project read: {snapshot.ProjectName}, Family '{snapshot.Family}'");
 
+                List<string> problems = ExportGuard.Problems(snapshot);
+                if (problems.Count > 0)
+                {
+                    Log.Write("Stopped: " + string.Join(" ", problems));
+                    Ui.Message(string.Join("\n\n", problems), Title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 using (var gitea = new GiteaClient(settings, token))
                 {
                     string key = ProjectKey.Normalize(snapshot.Family);
                     bool askedForKey = key == null;
+                    List<string> repositories = gitea.ListReposAsync().GetAwaiter().GetResult();
+                    Log.Write($"Repositories listed: {repositories.Count}");
                     if (askedForKey)
                     {
-                        List<string> existing = gitea.ListReposAsync().GetAwaiter().GetResult();
-                        Log.Write($"Repositories listed: {existing.Count}");
                         key = Ui.Run(owner => RepoPickerDialog.Ask(owner, snapshot.ProjectName,
-                            ProjectKey.Suggest(snapshot.ProjectName), existing));
+                            ProjectKey.Suggest(snapshot.ProjectName), repositories));
                         if (key == null)
                         {
                             Log.Write("Stopped: no project key chosen.");
@@ -75,7 +85,9 @@ namespace TiaSbom.AddIn
                     }
 
                     // Guard against exporting into another project's repository.
-                    List<string> warnings = MismatchCheck.Evaluate(key, snapshot, gitea.GetPreviousAsync(key).GetAwaiter().GetResult());
+                    List<PreviousSbom> versions = gitea.GetVersionsAsync(key).GetAwaiter().GetResult();
+                    Log.Write($"Versions in '{key}': {versions.Count}");
+                    List<string> warnings = MismatchCheck.Evaluate(key, snapshot, versions, repositories);
                     if (warnings.Count > 0 &&
                         Ui.Message(
                             $"This SBOM may belong to a different project than '{key}':\n\n• " + string.Join("\n• ", warnings) +
@@ -87,18 +99,29 @@ namespace TiaSbom.AddIn
                     }
 
                     string json = SbomBuilder.ToJson(SbomBuilder.Build(snapshot));
-                    string url;
+                    PublishResult result;
                     using (_tiaPortal.ExclusiveAccess("Uploading SBOM to Gitea…"))
                     {
-                        url = gitea.UploadSbomAsync(key, ProjectKey.VersionName(snapshot.ProjectName), snapshot.ProjectName,
-                            json, Readme.Build(key, snapshot)).GetAwaiter().GetResult();
+                        result = SbomPublisher.PublishAsync(gitea, key, snapshot, json).GetAwaiter().GetResult();
                     }
-                    Log.Write($"Uploaded to '{key}': {url}");
+                    if (result.AlreadyStored)
+                    {
+                        Log.Write($"Stopped: already stored as '{result.VersionName}' in '{key}'.");
+                        Ui.Message($"This content is already stored in '{key}' as '{result.VersionName}'. Nothing was changed.",
+                            Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                    Log.Write($"Uploaded to '{key}' as '{result.VersionName}': {result.Url}");
 
-                    string text = $"SBOM was saved to Gitea project '{key}'.";
+                    string text = $"SBOM was saved to Gitea project '{key}' as '{result.VersionName}'.";
+                    if (result.TagProblem != null)
+                    {
+                        Log.Write(result.TagProblem);
+                        text += $"\n\nWarning: {result.TagProblem}";
+                    }
                     if (askedForKey)
                         text += $"\n\nTip: set Project → Properties → Family = {key}\nso that next exports go there without asking.";
-                    if (url != null) text += "\n\n" + url;
+                    if (result.Url != null) text += "\n\n" + result.Url;
 
                     // No Process.Start: System.Diagnostics.Process requires full trust, the V17 sandbox rejects it.
                     Ui.Message(text, Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -109,20 +132,20 @@ namespace TiaSbom.AddIn
                 Log.Write("Gitea rejected the token: " + ex.Message);
                 if (tokenFromConfig)
                 {
-                    Report("Gitea rejected the service token from the TiaSbom configuration.\nPlease contact IT.\n\n" + ex.Message,
+                    Report("Gitea rejected the company token of TiaSbom. The SBOM was not saved.\n\nContact the administrator.",
                         MessageBoxIcon.Warning);
                 }
                 else
                 {
                     TokenStore.Clear(); // next click asks for a new token
-                    Report("Gitea rejected the token (or it may not create repositories). Please try again with a valid token.\n\n" + ex.Message,
+                    Report("Gitea did not accept your token. The SBOM was not saved.\n\nExport again and enter a valid token.",
                         MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
                 Log.Write("Export failed: " + ex);
-                Report("SBOM export failed:\n\n" + ex.Message, MessageBoxIcon.Error);
+                Report(ExportError.Describe(ex, giteaUrl), MessageBoxIcon.Error);
             }
         }
 

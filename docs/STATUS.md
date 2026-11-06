@@ -2,7 +2,7 @@
 
 **Posledná aktualizácia:** 2026-11-06
 **Fáza:** vývoj, testovanie ďalších verzií TIA
-**Verzia add-inu:** 0.2.7 vo `feat/multi-version-tia`, overená 0.2.6 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia add-inu:** 0.2.10 lokálne, overená 0.2.7 na V19 a 0.2.6 na V17 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má overenú 0.2.6, `feat/multi-version-tia` testovanú 0.2.7
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
@@ -35,7 +35,7 @@ TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je ov
 
 Úplný zoznam je v [06-kod.md](06-kod.md#známe-problémy-a-vylepšenia). Najdôležitejšie:
 
-1. Opakovaný export tej istej verzie prepíše `versions/<názov>/sbom.json`, ale tag zostane na prvom commite. Tag a súbor sa tak rozídu.
+1. Zmeny v 0.2.10 (pravidlá zápisu, atomický upload, opakovanie, zrozumiteľné chyby) ešte neboli preložené ani spustené na TIA. `IsModified` nie je v neúplnej dokumentácii V20 potvrdené.
 2. `IV3-XXXX` a podobné záznamy z GSDML nie sú skutočný model a ich „firmvér“ je verzia popisu, nie zariadenia.
 3. Chýba mapovanie objednávacích čísel na CPE, tracker ho bude potrebovať.
 4. SBOM obsahuje hardvér a použité inžinierske produkty, nie knižnice ani bloky PLC.
@@ -59,7 +59,7 @@ TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je ov
 ## Ďalšie kroky
 
 1. Otestovať V18, V20 a V16 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md) a overiť 0.2.7 na V17 a V21.
-2. Rozhodnúť správanie pri opakovanom exporte tej istej verzie.
+2. Prejsť testy výnimiek v [07-testovanie-verzii.md](07-testovanie-verzii.md#testy-výnimiek).
 3. Overiť inštalátor a aktiváciu add-inu na skutočnom TIA podľa [09-instalacia.md](09-instalacia.md).
 4. Pripraviť produkčný server a zálohy podľa [04-produkcia.md](04-produkcia.md).
 

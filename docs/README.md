@@ -42,7 +42,7 @@ flowchart LR
     CLI -->|"REST API a token"| GITEA
     CADDY --> GITEA
     GITEA --> DB
-    GITEA -.->|"latest.json"| TRACKER
+    GITEA -.->|"versions, sbom.json"| TRACKER
 ```
 
 ## Lokálne údaje

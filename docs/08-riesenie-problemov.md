@@ -2,6 +2,10 @@
 
 Každá položka vznikla pri skutočnom testovaní. Nové chyby dopisujte sem.
 
+## Čo vidí používateľ
+
+Add-in prekladá chyby v `ExportError.cs`. Hláška povie, čo sa stalo a čo robiť, technické detaily sú v `addin.log`.
+
 ## Prvá diagnostika
 
 ```mermaid

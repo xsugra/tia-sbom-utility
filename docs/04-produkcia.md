@@ -182,3 +182,14 @@ Požadovanú dobu uchovania potvrďte s právnym oddelením.
 ## Prenos dát z vývoja
 
 Vývojová inštancia obsahuje iba testovacie exporty. Do produkcie ich neprenášajte, projekty sa exportujú nanovo.
+
+## Ochrana archívu
+
+Token so zápisom vie meniť históriu, preto musí archív chrániť aj nastavenie Gitea. Kód to nerieši, nastaví to administrátor:
+
+- Servisný účet nesmie byť **Owner** organizácie, stačí tím s právom zápisu a vytvárania repozitárov.
+- Vetva `main` má zakázaný force push.
+- Mazanie repozitárov smie iba administrátor.
+- Pravidelná záloha mimo server je posledná poistka.
+
+Nastavenia overte na testovacom repozitári, kým sa použijú všade, aby nezablokovali zápis z add-inu.

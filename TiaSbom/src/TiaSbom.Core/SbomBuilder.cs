@@ -13,6 +13,7 @@ namespace TiaSbom.Core
     {
         public const string Unknown = "unknown";
         public const string SpecVersion = "1.6";
+        public const string TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
         public static JsonObject Build(ProjectSnapshot snapshot)
         {
@@ -26,7 +27,7 @@ namespace TiaSbom.Core
                 { "version", 1 },
                 { "metadata", new JsonObject
                     {
-                        { "timestamp", snapshot.ExportedAtUtc.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture) },
+                        { "timestamp", snapshot.ExportedAtUtc.ToUniversalTime().ToString(TimestampFormat, CultureInfo.InvariantCulture) },
                         { "component", new JsonObject
                             {
                                 { "type", "application" },
@@ -37,6 +38,7 @@ namespace TiaSbom.Core
                                         Prop("tia:version", snapshot.TiaVersion),
                                         Prop("tia:opennessApi", TiaBuild.Api),
                                         Prop("tia:unpluggedItemsRead", snapshot.UnpluggedItemsRead ? "true" : "false"),
+                                        Prop("tia:usedProductsRead", snapshot.UsedProductsRead ? "true" : "false"),
                                         Prop("tia:family", snapshot.Family),
                                         Prop("tia:projectPath", snapshot.ProjectPath),
                                         Prop("tia:exportedBy", snapshot.ExportedBy),
@@ -114,7 +116,7 @@ namespace TiaSbom.Core
             };
         }
 
-        private static bool HasFirmware(string version) =>
+        public static bool HasFirmware(string version) =>
             !string.IsNullOrWhiteSpace(version) && version != "V0.0" && version != "0.0";
 
         /// <summary>
