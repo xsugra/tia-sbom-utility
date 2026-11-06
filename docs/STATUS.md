@@ -19,12 +19,11 @@
 | Panel HMI v SBOM | áno | áno |
 | Čítanie uloženého tokenu | áno | áno |
 
-Ostatné verzie sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).
+TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je overená 0.2.6, verziu 0.2.7 treba zopakovať. Ostatné verzie sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).
 
 ## Čo neprešlo testom
 
 - TIA V16, V18, V20.
-- TIA V19: CLI export do súboru prešiel, chýba upload, add-in a overenie verzie 0.2.7.
 - Multiuser projekty a Local Sessions.
 - `CorporateAddIns`, podpísaný add-in, nasadenie cez IT.
 - Bežný používateľ bez administrátorských práv.
@@ -59,7 +58,7 @@ Ostatné verzie sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).
 
 ## Ďalšie kroky
 
-1. Otestovať V18, V19, V20 a V16 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md).
+1. Otestovať V18, V20 a V16 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md) a overiť 0.2.7 na V17 a V21.
 2. Rozhodnúť správanie pri opakovanom exporte tej istej verzie.
 3. Pripraviť produkčný server a zálohy podľa [04-produkcia.md](04-produkcia.md).
 
@@ -69,4 +68,4 @@ Ostatné verzie sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).
 |---|---|
 | 2026-10-29 | Prvý export z V21 do Gitea, add-in, automatické repozitáre a ochrana pred zámenou |
 | 2026-11-05 | Add-in funguje na V17 v sandboxe a na V21, panely HMI v SBOM |
-| 2026-11-06 | Dokumentácia a pravidlá projektu |
+| 2026-11-06 | Dokumentácia a pravidlá projektu, add-in overený na V19 |

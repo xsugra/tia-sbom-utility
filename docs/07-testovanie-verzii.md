@@ -9,7 +9,7 @@ Cieľ: pred produkciou overiť každú používanú verziu na skutočnej inštal
 | V16 | V14 SP1, V15, V15.1, V16 | `V16` | nie je | 4.6.2 | ☐ neotestované |
 | V17 | V15, V15.1, V16, V17 | `V17` | `V17` | 4.8 | ✅ overené |
 | V18 | V15.1 až V18 | `V17` | neznáme | 4.8 | ☐ neotestované |
-| V19 | V16 až V19 | `V17` | `V19` | 4.8 | 🟡 CLI overené, add-in nie |
+| V19 | V16 až V19 | `V17` | `V19` | 4.8 | ✅ overené |
 | V20 | V17 až V20 | `V17` | neznáme | 4.8 | ☐ neotestované |
 | V21 | V21 | `V21` | `V21` | 4.8 | ✅ overené |
 
@@ -176,11 +176,15 @@ Prebieha, začiatok 2026-11-06.
 | CLI build | `-Api V17 -Portal V19` OK, bez Developer Packu 4.8 |
 | `PublicAPI\V17.AddIn` | Add-In API a `Schemas`, **bez publisheru** |
 | Publisher | iba `PublicAPI\V19.AddIn`, vo `V17.AddIn` nie je |
-| CLI test | OK, `--attach --dump-hw`, 125 položiek, `tia:version` V19, API V17 |
-| SBOM | Našiel chybu: GSD zariadenia bez čísla vypadli, opravené v 0.2.7, zatiaľ neoverené |
-| Upload | čaká, VM nie je na prepínači s Gitea |
+| CLI test | OK s buildom `V17` aj `V19`, 125 položiek, skutočná verzia TIA V19 |
+| SBOM | Zariadenia Festo CMMT-ST sú od 0.2.7 v SBOM, overené. Bez čísla a firmvéru, hodnoty GSDML neposkytuje |
+| Path | Skopírované do `C:\Program Files\Siemens\Automation\Portal V19\AddIns`, TIA odtiaľ add-in načítala |
+| Dôvera | `fullTrust=False`, sandbox |
+| Okná a čítanie | Dialóg tokenu, chybové okno a prečítanie projektu OK |
+| Upload | OK, 2026-11-06, add-in 0.2.7 vytvoril nový repozitár, výsledok overený v Gitea |
+| Neoverené | multiuser, vyplnené `Family`, varovanie o zámene, zlyhanie tokenu |
 | Schéma | Namespace `.../Publisher/V19`, dovoľuje `SecurityPermissions` aj `UnrestrictedPermissions` |
-| Add-in | Konfigurácia `AddInPublisherConfig.V19.xml` a `-Api V19` pripravené, nepreložené |
+| Add-in | `-Api V19 -AddIn`, 0.2.7, balík sa aktivuje a beží |
 
 Pozornosť: `Device.UnpluggedItems` je od V19 dokumentované.
 
