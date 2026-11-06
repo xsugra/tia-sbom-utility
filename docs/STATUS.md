@@ -44,9 +44,8 @@ Ostatné verzie sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).
 
 | Vetva | Stav |
 |---|---|
-| lokálny `main` | kód z `424aee1` a dokumentácia, pred GitHub `main` |
-| `feat/multi-version-tia` | na `424aee1`, pushnutá |
-| GitHub `main` | na `60f5841`, push čaká na súhlas používateľa |
+| `main` | lokálne aj na GitHube, kód z `424aee1` a dokumentácia |
+| `feat/multi-version-tia` | na `424aee1`, bez dokumentácie, ďalej sa testuje z `main` |
 
 ## Prostredie
 
