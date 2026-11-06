@@ -3,6 +3,7 @@
     One source tree, one build per Openness API:
       TiaApi=V16  runs on TIA V16 - V19
       TiaApi=V17  runs on TIA V17 - V20
+      TiaApi=V19  needed for the Add-In on TIA V19: PublicAPI\V17.AddIn there has no publisher
       TiaApi=V21  runs on TIA V21 only (older assemblies are no longer shipped)
     TiaPortal = the installation that provides the DLLs at build time, e.g. -p:TiaApi=V17 -p:TiaPortal=V19.
   -->

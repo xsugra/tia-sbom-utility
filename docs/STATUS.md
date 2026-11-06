@@ -2,8 +2,8 @@
 
 **Posledná aktualizácia:** 2026-11-06
 **Fáza:** vývoj, testovanie ďalších verzií TIA
-**Verzia add-inu:** 0.2.6 (`Product/Version` v `AddInPublisherConfig.*.xml`)
-**Verzia kódu:** commit `424aee1` na `feat/multi-version-tia`
+**Verzia add-inu:** 0.2.7 vo `feat/multi-version-tia`, overená 0.2.6 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia kódu:** `main` má overenú 0.2.6, `feat/multi-version-tia` testovanú 0.2.7
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
 
@@ -23,7 +23,8 @@ Ostatné verzie sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).
 
 ## Čo neprešlo testom
 
-- TIA V16, V18, V19, V20.
+- TIA V16, V18, V20.
+- TIA V19: CLI export do súboru prešiel, chýba upload, add-in a overenie verzie 0.2.7.
 - Multiuser projekty a Local Sessions.
 - `CorporateAddIns`, podpísaný add-in, nasadenie cez IT.
 - Bežný používateľ bez administrátorských práv.
@@ -44,8 +45,9 @@ Ostatné verzie sú v [07-testovanie-verzii.md](07-testovanie-verzii.md).
 
 | Vetva | Stav |
 |---|---|
-| `main` | lokálne aj na GitHube, kód z `424aee1` a dokumentácia |
-| `feat/multi-version-tia` | na `424aee1`, bez dokumentácie, ďalej sa testuje z `main` |
+| GitHub `main` | overená 0.2.6 a dokumentácia |
+| `feat/multi-version-tia` | 0.2.7, podpora add-inu V19 a oprava GSD, testuje sa z nej |
+| lokálny `main` | rovnaký obsah ako `feat/multi-version-tia`, GitHub `main` čaká na overenie |
 
 ## Prostredie
 

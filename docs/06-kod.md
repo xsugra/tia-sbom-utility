@@ -42,12 +42,12 @@ Pred V21 obsahuje `Siemens.Engineering.AddIn.dll` vlastnú kópiu objektového m
 
 | Vlastnosť | Význam |
 |---|---|
-| `TiaApi` | V16, V17 alebo V21, určuje API a konštanty |
+| `TiaApi` | V16, V17, V19 alebo V21, určuje API a konštanty |
 | `TiaPortal` | inštalácia, z ktorej sa berú DLL |
 
 | Konštanta | Platí pre | Význam |
 |---|---|---|
-| `TIA_API_V16/V17/V21` | daný build | hodnota `TiaBuild.Api` |
+| `TIA_API_V16/V17/V19/V21` | daný build | hodnota `TiaBuild.Api` |
 | `TIA_HAS_SESSIONS` | všetko okrem V16 | `ProjectBase`, `LocalSessions` |
 | `TIA_HAS_UNPLUGGED_ITEMS` | všetko okrem V16 | `Device.UnpluggedItems`, overené na V17 |
 
@@ -78,7 +78,7 @@ Beží v každom režime a nesmie závisieť od TIA.
 
 Dôležité pravidlá:
 
-- `HwItem.IsProduct`: položka má číslo a nie je `System:` položka bez číslice. Tým vypadne stojan `Rack`, ale ostanú SCALANCE.
+- `HwItem.IsProduct`: položka má číslo a nie je `System:` položka bez číslice. Tým vypadne stojan `Rack`, ale ostanú SCALANCE. Prístupový bod GSD s `/DAP/` je produkt vždy, aj bez čísla, napríklad Festo CMMT-ST.
 - `HwItem.ProductName`: `TypeName`, potom objednávacie číslo, potom názov. Panel HMI nemá `TypeName`.
 - `HwIdentity`: číta `OrderNumber:<číslo>/<firmvér>/<doplnok>` z `TypeIdentifier`, lebo panel nemá atribút `OrderNumber`.
 - `HasFirmware`: `""`, `V0.0` a `0.0` nie sú firmvér.
@@ -157,7 +157,7 @@ Portál sa vyberá v poradí `--portal`, prípona súboru, bežiaci proces, najn
 | `Ui.cs` | Okná na vlastnom STA vlákne pod skrytým topmost oknom |
 | `TokenDialog.cs`, `RepoPickerDialog.cs` | Dialógy |
 | `Log.cs` | `addin.log` v `%APPDATA%\TiaSbom`, záloha v `%TEMP%` |
-| `AddInPublisherConfig.V17.xml` | Sandbox, vymenované oprávnenia |
+| `AddInPublisherConfig.V17.xml`, `.V19.xml` | Sandbox, vymenované oprávnenia |
 | `AddInPublisherConfig.V21.xml` | `UnrestrictedAccess` |
 
 ```mermaid
