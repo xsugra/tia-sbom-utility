@@ -165,6 +165,7 @@ Priečinok závisí od verzie a overuje sa v TIA, nikdy sa nehádže.
 | TIA | Overená cesta |
 |---|---|
 | V17 | `C:\Program Files\Siemens\Automation\Portal V17\AddIns` |
+| V19 | `C:\Program Files\Siemens\Automation\Portal V19\AddIns` |
 | V21 | `%APPDATA%\Siemens\Automation\Portal V21\UserAddIns`, súbor `TiaSbom.addin` |
 | ostatné | zistiť a zapísať do [testov](07-testovanie-verzii.md) |
 
