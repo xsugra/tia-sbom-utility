@@ -11,3 +11,6 @@ addin-dlls.txt
 # Siemens files copied from the TIA installation (proprietary, not ours to redistribute)
 Siemens.*.xsd
 Siemens.*.dll
+
+# Local notes: machine names, addresses, accounts, test projects
+docs/local/

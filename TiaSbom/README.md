@@ -1,4 +1,6 @@
-# TiaSbom – SBOM z TIA Portal V21 do Gitea
+# TiaSbom – SBOM z TIA Portal do Gitea
+
+Celá dokumentácia je v [../docs/README.md](../docs/README.md). Tento súbor je stručný prehľad riešenia.
 
 Jedno kliknutie v TIA Portali → CycloneDX 1.6 SBOM (HW + firmvér + použitý TIA softvér) → commit do Gitea.
 
