@@ -29,3 +29,8 @@ token.bin
 
 # Test output (real project data)
 sbom*.json
+
+# Installer settings can hold a token, packages are built output
+*.env
+!*.env.example
+dist/

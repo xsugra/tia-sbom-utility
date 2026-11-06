@@ -44,7 +44,7 @@ flowchart TB
 | Čítanie bez prihlásenia | Povolené | Rozhodnúť, odporúčané `REQUIRE_SIGNIN_VIEW=true` |
 | Zálohy | Žiadne | Denne, mimo server, s testom obnovy |
 | Add-in | Nepodpísaný, autor `YourCompany` | Podpísaný, skutočný autor |
-| Nasadenie | Ručne | IT, GPO alebo softvérová distribúcia |
+| Nasadenie | `install.ps1` | Inštalátor cez GPO, pozri [09-instalacia.md](09-instalacia.md) |
 | SSH port 2222 | Publikovaný | Vypnúť, ak ho nikto nepoužíva |
 
 ## Čo server potrebuje

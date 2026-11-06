@@ -32,7 +32,7 @@ Riešenie sa nemení bez výslovného pokynu používateľa. Firma nesmie použ�
 
 Podrobnosti sú v [docs/05-bezpecnost.md](docs/05-bezpecnost.md).
 
-- Do Gitu ani do dokumentov nikdy nepatrí token, heslo, `config.json`, `token.bin`, `.env` ani certifikát.
+- Do Gitu ani do dokumentov nikdy nepatrí token, heslo, `config.json`, `token.bin`, `.env`, `tiasbom.env` ani certifikát.
 - Do Gitu nepatria SBOM zo skutočných projektov, názvy zákazníkov, cesty k projektom ani mená strojov. Tie patria do `docs/local/`.
 - Claude nikdy sám nemení firewall, `netsh portproxy`, publikovanie portov ani nastavenia zabezpečenia. Pripraví príkazy, vysvetlí ich a spustí ich používateľ.
 - Port 3000 je len pre vývoj a nesmie byť dostupný z firemnej siete. Pred každým návrhom siete si polož otázku: „Vidí to iný počítač vo firme?“
@@ -73,6 +73,7 @@ Dokumentácia je súčasť zmeny. Úloha nie je hotová, kým nesedí.
 | Plán produkcie | `docs/04-produkcia.md` |
 | Kód, štruktúra, známy problém | `docs/06-kod.md` |
 | Nová chyba a jej riešenie | `docs/08-riesenie-problemov.md` |
+| Inštalátor, `tiasbom.env`, hromadné nasadenie | `docs/09-instalacia.md` |
 | Konkrétne stroje, adresy, projekty | `docs/local/environment.md`, nikdy tracked dokumenty |
 
 Na konci každého chatu, v ktorom sa niečo zmenilo:

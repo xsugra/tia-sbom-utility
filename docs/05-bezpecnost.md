@@ -17,7 +17,7 @@ SBOM je citlivý: ukazuje presné komponenty a verzie firmvéru vrátane možný
 
 ## Súbory chránené pred Gitom
 
-`.gitignore` blokuje `config.json`, `token.bin`, `*.pfx`, `*.p12`, `sbom*.json`, `*.zip`, `*.addin`, `Siemens.*.dll`, `Siemens.*.xsd` a `docs/local/`.
+`.gitignore` blokuje `config.json`, `tiasbom.env`, `token.bin`, `*.pfx`, `*.p12`, `sbom*.json`, `*.zip`, `*.addin`, `Siemens.*.dll`, `Siemens.*.xsd` a `docs/local/`.
 
 Pred každým commitom skontrolujte:
 
