@@ -158,6 +158,9 @@ Pri prvom spustení nového `.exe` ukáže TIA okno brány Openness. **Môže sa
 
 ## Nasadenie add-inu
 
+Inštalátor to spraví za vás, pozri [09-instalacia.md](09-instalacia.md). Ručný postup je tu pre prípad, že ho treba preskúmať.
+
+
 ### Kam
 
 Priečinok závisí od verzie a overuje sa v TIA, nikdy sa nehádže.

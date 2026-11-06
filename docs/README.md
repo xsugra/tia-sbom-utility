@@ -17,6 +17,7 @@ Projekt je **vo vývoji**. Aktuálny stav je v [STATUS.md](STATUS.md).
 | čítať a vylepšovať kód | [06-kod.md](06-kod.md) |
 | testovať ďalšiu verziu TIA | [07-testovanie-verzii.md](07-testovanie-verzii.md) |
 | vyriešiť chybu | [08-riesenie-problemov.md](08-riesenie-problemov.md) |
+| nainštalovať utilitu na počítače | [09-instalacia.md](09-instalacia.md) |
 | poznať pravidlá pre Claude chaty | [../CLAUDE.md](../CLAUDE.md) |
 
 ## Celkový pohľad

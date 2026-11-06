@@ -60,7 +60,8 @@ TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je ov
 
 1. Otestovať V18, V20 a V16 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md) a overiť 0.2.7 na V17 a V21.
 2. Rozhodnúť správanie pri opakovanom exporte tej istej verzie.
-3. Pripraviť produkčný server a zálohy podľa [04-produkcia.md](04-produkcia.md).
+3. Overiť inštalátor a aktiváciu add-inu na skutočnom TIA podľa [09-instalacia.md](09-instalacia.md).
+4. Pripraviť produkčný server a zálohy podľa [04-produkcia.md](04-produkcia.md).
 
 ## História míľnikov
 
