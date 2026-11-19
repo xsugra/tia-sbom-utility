@@ -2,7 +2,7 @@
 
 **Posledná aktualizácia:** 2026-11-19
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
-**Verzia add-inu:** 0.2.11 vo vetve `claude/tia-sbom-automation-testing-d1becd`, overená na V21. Na V19 je overená 0.2.7, na V17 0.2.6 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia add-inu:** 0.2.11 vo vetve `claude/tia-sbom-automation-testing-d1becd`, overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má 0.2.10-rc1, 0.2.11 je vo vetve `claude/tia-sbom-automation-testing-d1becd` na GitHube, nie v `main`
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
@@ -11,14 +11,16 @@
 
 | Oblasť | TIA V17 | TIA V19 | TIA V21 |
 |---|---|---|---|
-| Build a publisher | áno | áno | áno, 0.2.11 |
-| Add-in: export do Gitea | áno, 0.2.6 | áno, 0.2.7 | áno, 0.2.11 |
-| Inštalátor, `CorporateAddIns` | – | – | áno, 0.2.11 |
+| Build a publisher | áno, 0.2.11 | áno, 0.2.11 | áno, 0.2.11 |
+| Add-in: export do Gitea | áno, 0.2.11 (už uložený obsah) | áno, 0.2.11 (už uložený obsah) | áno, 0.2.11 |
+| Inštalátor | áno, 0.2.11, `Portal V17\AddIns` | áno, 0.2.11, `Portal V19\AddIns` | áno, 0.2.11, `CorporateAddIns` |
 | Aktivácia a aktualizácia add-inu | – | – | áno: aktualizácia add-in deaktivuje |
-| Chybové hlášky `TS-…` v TIA | – | – | `TS-NET-01/02/04`, `TS-AUTH-01` |
-| Okná nad TIA | áno, staré okná | áno, staré okná | áno, nové okno hlásení 0.2.11 |
+| Chybové hlášky `TS-…` v TIA | `TS-NET-04` | `TS-NET-04` | `TS-NET-01/02/04`, `TS-AUTH-01` |
+| Okná nad TIA | áno, 0.2.11 v sandboxe, Ctrl+C funguje | áno, 0.2.11 v sandboxe, Ctrl+C funguje | áno, nové okno hlásení 0.2.11 |
 | Dialóg pri prázdnom Family | áno | áno | áno |
-| `check.cmd` s tokenom používateľa | – | – | áno |
+| `check.cmd` s tokenom používateľa | áno | áno | áno |
+
+V18 a V20: 0.2.11 overená 2026-11-19 rovnakým postupom ako V19, podrobnosti v [07-testovanie-verzii.md](07-testovanie-verzii.md).
 
 Automatické testy (overené 2026-11-19, podrobnosti v [12-automaticke-testy.md](12-automaticke-testy.md)):
 
@@ -50,11 +52,10 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 ## Čo neprešlo testom
 
-- Okná 0.2.11 na V17 a V19. Sandbox V17 by mohol odmietnuť `TopMost` alebo Clipboard, Clipboard je ošetrený.
-- TIA V16, V18, V20.
+- Nový zápis verzie s 0.2.11 na V17 až V20 (testovaný bol iba už uložený obsah, zápis overený na V21).
+- TIA V16.
 - Multiuser projekty a Local Sessions.
 - GPO, účet SYSTEM, Siemens Add-In Rollout Service.
-- Podpísaný add-in, či by odstránil opakovanú aktiváciu.
 - Bežný používateľ bez administrátorských práv.
 - V TIA: neuložený projekt, archivovaný repozitár, vyplnené `Family`, varovanie o zámene.
 - Obnova Gitea zo zálohy. Pravidelná záloha zatiaľ neexistuje.
@@ -89,8 +90,8 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 ## Ďalšie kroky
 
 1. Prejsť vetvu `claude/tia-sbom-automation-testing-d1becd` a po overení na TIA ju zlúčiť do `main`.
-2. Overiť 0.2.11 na V17 a V19, hlavne okná v sandboxe.
-3. Rozhodnúť o servisnom tokene verzus osobných tokenoch a zistiť podpisovanie add-inu.
+2. Pushnúť `main` s 0.2.11, overené na V17 až V21.
+3. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
 4. Pripraviť produkčnú Gitea so stálou adresou, HTTPS a zálohou podľa [04-produkcia.md](04-produkcia.md).
 5. Pilot na 2 až 3 PC podľa [09-instalacia.md](09-instalacia.md#nasadenie-na-10-až-20-počítačov).
 
