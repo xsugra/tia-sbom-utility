@@ -245,12 +245,25 @@ function Write-Config([hashtable]$Settings) {
 
 # Copies tiasbom.exe and check.cmd to %ProgramData%\TiaSbom, so every user can check the connection later.
 function Install-Tools {
+    # A package has tools\ next to install.ps1. A development run (-Build, update-vm) has only the built CLI.
     $source = Join-Path $PSScriptRoot 'tools'
-    if (-not (Test-Path -LiteralPath (Join-Path $source 'tiasbom.exe'))) { return }
+    $files = @()
+    if (Test-Path -LiteralPath (Join-Path $source 'tiasbom.exe')) {
+        $files = @(Get-ChildItem -LiteralPath $source -File)
+    } else {
+        $cli = Get-ChildItem -Path (Join-Path $PSScriptRoot '..\src\TiaSbom.Cli\bin\V*\Release\net48\tiasbom.exe') -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($cli) {
+            # --check loads no Openness assembly, so the Siemens DLLs stay out, as in package.ps1.
+            $files = @(Get-ChildItem -LiteralPath $cli.DirectoryName -File |
+                Where-Object { $_.Extension -in '.exe', '.dll', '.config' -and $_.Name -notlike 'Siemens.*' })
+        }
+    }
+    if (-not $files) { Write-Step 'No tiasbom.exe found, check.cmd is not installed. Build first or use a package.' 'WARN'; return }
     $target = Join-Path $ConfigDir 'tools'
     if ($Check) { Write-Step "Would copy tools to $target"; return }
     New-Item -ItemType Directory -Force $target | Out-Null
-    Copy-Item -Path (Join-Path $source '*') -Destination $target -Force
+    $files | Copy-Item -Destination $target -Force
     $launcher = Join-Path $PSScriptRoot 'check.cmd'
     if (Test-Path -LiteralPath $launcher) { Copy-Item -LiteralPath $launcher -Destination $ConfigDir -Force }
     Write-Step "Tools: $target, users run $(Join-Path $ConfigDir 'check.cmd')"
