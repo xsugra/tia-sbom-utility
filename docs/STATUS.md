@@ -2,7 +2,7 @@
 
 **Posledná aktualizácia:** 2026-11-19
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
-**Verzia add-inu:** 0.2.12 v kóde, neoverená v TIA. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia add-inu:** 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, bez exportu), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má 0.2.11, na GitHube od 2026-11-19
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
@@ -40,10 +40,11 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 4. Neplatná `BaseUrl`, `TimeoutSeconds=0` alebo poškodený `config.json` padali bez zrozumiteľnej hlášky.
 5. Inštalátor pre V21 dával add-in iba do profilu správcu. Teraz `ADDIN_SCOPE=corporate`.
 
-## 0.2.12, 2026-11-19, neoverené v TIA
+## 0.2.12, 2026-11-19, overené na V21 proti produkčnej Gitea
 
-- Kontrola spojenia (`check.cmd`, inštalátor) berie 403 z produkčnej Gitea s `REQUIRE_SIGNIN_VIEW=true` ako dostupný server. Predtým by hlásila chybu.
-- `GITEA_CA_CERT` v `tiasbom.env`: inštalátor pridá koreňovú CA Caddy do dôveryhodných na PC, kým nie je certifikát firemnej CA. Overené iba suchým behom.
+- Kontrola spojenia (`check.cmd`, inštalátor) berie 403 z produkčnej Gitea s `REQUIRE_SIGNIN_VIEW=true` ako dostupný server. Predtým by hlásila chybu. Overené na V21.
+- `GITEA_CA_CERT` v `tiasbom.env`: inštalátor pridá koreňovú CA Caddy do dôveryhodných na PC, kým nie je certifikát firemnej CA. Overené na V21, inštalátor kód 0, `check.cmd` `RESULT: OK` s osobným tokenom.
+- Export z TIA do produkčnej Gitea zatiaľ nebol, ani 0.2.12 na V17 až V20.
 - Add-in sa nemení správaním, verzia je zvýšená kvôli zmene `TiaSbom.Gitea`.
 
 ## Nové
@@ -81,7 +82,7 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 | Vetva | Stav |
 |---|---|
 | `main` (lokálny aj GitHub) | 0.2.11, overená na V17 až V21, pushnutý 2026-11-19 |
-| `claude/tia-sbom-automation-testing-d1becd` | zlúčená do `main` |
+| `claude/tia-sbom-automation-testing-d1becd` | 0.2.12, pred `main`, pushnutá. Do `main` po súhlase |
 
 ## Prostredie
 
@@ -90,15 +91,16 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 | Gitea | beží vo WSL ako vývojová inštancia, testovací účet `sbom-test` a organizácia `sbom-test-org` |
 | Zálohy Gitea | žiadne |
 | Pripojenie VM | HTTP cez `netsh portproxy`, len na Hyper-V prepínači |
-| Produkčný server | Beží na Windows serveri vo WSL, `https://<IP>` dostupné z firemnej siete (overené 2026-11-12 z iného PC). Autoštart cez úlohu S4U overený po reštarte. Certifikát zatiaľ `tls internal`, prehliadač hlási nedôveryhodný. Konfigurácia a postup v `xsugra/gitea-server`. DNS a certifikát firemnej CA chýbajú, export add-inu cez HTTPS neoverený |
+| Produkčný server | Beží na Windows serveri vo WSL, `https://<IP>` dostupné z firemnej siete (overené 2026-11-12 z iného PC). Autoštart cez úlohu S4U overený po reštarte. Certifikát zatiaľ `tls internal`, PC mu dôverujú cez `GITEA_CA_CERT`. `REQUIRE_SIGNIN_VIEW=true`. Konfigurácia a postup v `xsugra/gitea-server`. DNS a certifikát firemnej CA chýbajú. Inštalácia a `check.cmd` z VM V21 overené 2026-11-19, export add-inu cez HTTPS ešte nie |
 | VM V21 | SSH iba kľúčom, iba z Default Switch, na automatizované testy |
 
 ## Ďalšie kroky
 
-1. Nasadiť produkčný server podľa [gitea-server: nasadenie.md](https://github.com/xsugra/gitea-server/blob/main/docs/nasadenie.md). Overiť `portproxy` 443, štart bez prihlásenia a export add-inu cez HTTPS, potom zálohy. Stála adresa a certifikát firemnej CA podľa [04-produkcia.md](04-produkcia.md#adresa-servera).
-2. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
-3. Zmeniť autora add-inu `YourCompany` na názov firmy.
-4. Pilot na 2 až 3 PC podľa [09-instalacia.md](09-instalacia.md#nasadenie-na-10-až-20-počítačov).
+1. Prvý export z TIA V21 do produkčnej Gitea s 0.2.12 na testovacom projekte. Potom zlúčiť 0.2.12 do `main` a tag `v0.2.12`, so súhlasom.
+2. Zálohy produkčnej Gitea a test obnovy. Stála adresa a certifikát firemnej CA podľa [04-produkcia.md](04-produkcia.md#adresa-servera).
+3. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
+4. Zmeniť autora add-inu `YourCompany` na názov firmy.
+5. Pilot na 2 až 3 PC podľa [09-instalacia.md](09-instalacia.md#nasadenie-na-10-až-20-počítačov).
 
 ## História míľnikov
 
