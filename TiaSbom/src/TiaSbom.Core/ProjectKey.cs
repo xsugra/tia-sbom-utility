@@ -68,7 +68,7 @@ namespace TiaSbom.Core
         }
 
         /// <summary>
-        /// Suggestion for the dialog when Family is empty: a leading job number ("24337_20261002_v0_493_V21" -> "24337"),
+        /// Suggestion for the dialog when Family is empty: a leading job number ("10001_20260101_v0_1_V21" -> "10001"),
         /// otherwise the normalized project name. The user always confirms.
         /// </summary>
         public static string Suggest(string projectName)

@@ -81,7 +81,7 @@ Po skončení zákazky repozitár v Gitea *Archive* → read-only, dohľadateľn
 5. **Overenie cez CLI**:
    ```
    tiasbom --attach --out sbom.json
-   tiasbom --attach --upload --key 24337
+   tiasbom --attach --upload --key 10001
    ```
 6. **Add-In**:
    ```
