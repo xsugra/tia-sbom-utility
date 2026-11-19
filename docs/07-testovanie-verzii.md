@@ -145,6 +145,24 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 
 ### TIA V21, overené
 
+0.2.11, 2026-11-18, automatizovaný test cez SSH a interaktívnu plochu VM. Postup je v [12-automaticke-testy.md](12-automaticke-testy.md), screenshoty v [príručke](10-pouzivatelska-prirucka.md).
+
+| Položka | Výsledok |
+|---|---|
+| Build | `-Api V21 -AddIn` OK, testy net48 vo VM OK |
+| Balík a inštalácia | `package.ps1` + `install.ps1` s `ADDIN_SCOPE=corporate` OK, test spojenia OK |
+| Path | `C:\ProgramData\Siemens\Automation\Portal V21\CorporateAddIns\TiaSbom.V21.addin` |
+| Prvý štart TIA | Dialóg *Corporate Add-Ins updated – New Add-In added*, add-in deaktivovaný |
+| Aktivácia | Status → Activate → *Add-in activation, Unsigned* → Yes → aktívny |
+| Aktualizácia súboru | *Add-In replaced*, TIA add-in **deaktivuje**, treba znova aktivovať |
+| Export | OK, dialóg kľúča pri prázdnom `Family`, nová verzia `_2`, odkaz na commit |
+| Opakovaný export | *already stored*, nič sa nezapíše |
+| `TS-NET-01`, `TS-NET-02`, `TS-NET-04` | správna hláška s kódom a cestou k logu |
+| Token | dialóg nad TIA; zlý token `TS-AUTH-01`, token sa zmaže, v logu nie je |
+| `check.cmd` s tokenom používateľa | OK |
+| Chyba nájdená a opravená | okná add-inu sa otvárali za TIA, `MessageBox` bez ikony na paneli. Add-in na V21 beží vo vlastnom procese |
+| Neoverené | neuložený projekt, archivovaný repozitár v TIA, vyplnené `Family`, multiuser, bežný používateľ |
+
 0.2.10-rc1, 2026-11-06: `install.ps1 -Build` OK, starý `TiaSbom.addin` nahradený za `TiaSbom.V21.addin`, export do Gitea OK, používateľ potvrdil funkčnosť. Pri teste sa add-in raz zdal zaseknutý na hláške, príčina nie je potvrdená.
 
 
@@ -221,21 +239,24 @@ Pri novej chybe doplňte [08-riesenie-problemov.md](08-riesenie-problemov.md).
 
 ## Testy výnimiek
 
-Stačí ich prejsť raz na V17, V19 a V21. Každá chyba musí povedať, čo sa stalo a čo robiť.
+Stačí ich prejsť raz na V17, V19 a V21. Každá chyba musí povedať, čo sa stalo a čo robiť. Väčšinu logiky už overujú [automatické testy](12-automaticke-testy.md) bez TIA. V TIA ostáva overiť, že sa hláška ukáže a TIA nezamrzne.
 
-| Test | Očakávaný výsledok |
-|---|---|
-| Neuložený projekt | Export sa zastaví, výzva na uloženie |
-| Projekt bez hardvéru | Export sa zastaví |
-| Export bez zmeny | Správa, že obsah už existuje, žiadny nový commit |
-| Zmena hardvéru pri rovnakom názve | `<názov>_2`, pôvodná verzia ostane |
-| Dve verzie s iným hardvérom a iným názvom | Bez varovania, README ukáže obe |
-| „Save as“ s novým číslom a starým `Family` | Varovanie o čísle zákazky |
-| Nový nečíselný kľúč s preklepom | Varovanie o podobnom repozitári |
-| Názov s diakritikou | `Čiara` sa uloží ako `Ciara` |
-| Názov dlhší ako 100 znakov | Skrátený názov s hashom |
-| Archivovaný repozitár | Zrozumiteľná chyba, `token.bin` ostane |
-| Zlý token | Výzva na nový token |
-| Vypnutá Gitea | Hláška o spojení, TIA nezamrzne |
-| Dvaja exportujú naraz | Oba exporty sú v Gitea a v README |
-| `config.json` chýba alebo je poškodený | Hláška s kontaktom na administrátora |
+| Test | Očakávaný výsledok | Automatický test | V21 v TIA |
+|---|---|---|---|
+| Neuložený projekt | Export sa zastaví, výzva na uloženie | áno | – |
+| Projekt bez hardvéru | Export sa zastaví | áno | – |
+| Export bez zmeny | Správa, že obsah už existuje, žiadny nový commit | áno, Gitea | ✅ 2026-11-18 |
+| Zmena hardvéru pri rovnakom názve | `<názov>_2`, pôvodná verzia ostane | áno, Gitea | ✅ 2026-11-18 |
+| Dve verzie s iným hardvérom a iným názvom | Bez varovania, README ukáže obe | áno | – |
+| „Save as“ s novým číslom a starým `Family` | Varovanie o čísle zákazky | áno | – |
+| Nový nečíselný kľúč s preklepom | Varovanie o podobnom repozitári | áno | – |
+| Názov s diakritikou | `Čiara` sa uloží ako `Ciara` | áno | – |
+| Názov dlhší ako 100 znakov | Skrátený názov s hashom | áno | – |
+| Archivovaný repozitár | `TS-GIT-03`, `token.bin` ostane | áno, Gitea | – |
+| Zlý token | `TS-AUTH-01`, výzva na nový token | áno, Gitea | ✅ 2026-11-18 |
+| Token bez oprávnení | `TS-AUTH-02` s návodom | áno, Gitea | – |
+| Vypnutá Gitea, zlý port, zlé meno | `TS-NET-02`, `TS-NET-04`, `TS-NET-01`, TIA nezamrzne | áno | ✅ 2026-11-18 |
+| HTML namiesto API | `TS-API-01` | áno | – |
+| Certifikát | `TS-TLS-01` | áno, aj inštalátor | – |
+| Dvaja exportujú naraz | Oba exporty sú v Gitea a v README | áno, 4 súbežne, Gitea | – |
+| `config.json` chýba alebo je poškodený | `TS-CFG-01`, `TS-CFG-02` | áno | – |

@@ -21,6 +21,10 @@ namespace TiaSbom.Cli
         {
             try
             {
+                // --check needs no Openness at all, so it runs before anything could load Siemens assemblies.
+                if (Array.FindIndex(args, a => string.Equals(a, "--check", StringComparison.OrdinalIgnoreCase)) >= 0)
+                    return Check.Run(args);
+
                 // --help and --login work without TIA Portal.
                 if (args.Length > 0 && Array.FindIndex(args, IsLocalCommand) < 0)
                     _opennessFolder = OpennessLocator.FindApiDir(args);
@@ -28,7 +32,10 @@ namespace TiaSbom.Cli
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("ERROR: " + ex.Message);
+                // Same codes as the Add-In, so docs/11-chybove-hlasky.md covers both.
+                Gitea.ExportProblem problem = Gitea.ExportError.Explain(ex, null);
+                Console.Error.WriteLine($"ERROR {problem.Code}: {ex.Message}");
+                if (problem.Code != "TS-UNK-01") Console.Error.WriteLine(problem.Action);
                 return 1;
             }
         }

@@ -12,6 +12,9 @@ Projekt beží na internej sieti firmy aj vo vývoji. Pravidlá platia od prvéh
 | SBOM skutočného projektu | Gitea | GitHub, tracked súbory, verejné nástroje |
 | Mená zákazníkov, cesty | Gitea, `docs/local/` | Tracked dokumenty, commit správy |
 | Mená strojov, účty | `docs/local/` | Tracked dokumenty |
+| Screenshot TIA alebo Gitea so skutočným projektom | scratchpad, `docs/local/` | `docs/img` bez úpravy |
+
+Screenshot do `docs/img` vždy prejde cez `TiaSbom/tools/redact-screenshot.ps1`. Skript oreže okno a zakryje názov projektu, cestu, meno zákazníka a meno stroja. Titulok TIA obsahuje celú cestu k projektu a zoznam *Recently used* mená zákazníkov. Screenshoty Gitea sa robia na vymyslených dátach v `sbom-test-org/10001`.
 
 SBOM je citlivý: ukazuje presné komponenty a verzie firmvéru vrátane možných zraniteľností. Obsahuje aj cestu k projektu `tia:projectPath` a používateľa `tia:exportedBy`.
 
@@ -68,6 +71,23 @@ V stĺpci adresy nesmie byť `0.0.0.0`. Docker publikuje porty na `0.0.0.0` iba 
 
 Pred zmenou režimu WSL na `mirrored` si overte dopad. Porty WSL by sa zobrazili na rozhraniach Windows.
 
+### SSH do vývojovej VM
+
+Na automatizované testy v TIA má vývojová VM OpenSSH Server. Nastavil ho používateľ 2026-11-18:
+
+- prihlásenie **iba kľúčom**, `PasswordAuthentication no`, kľúč iba v `administrators_authorized_keys`,
+- vlastný kľúč iba na tento účel, `%USERPROFILE%\.ssh\tia_vm_ed25519` na laptope,
+- pravidlo firewallu `TiaSbomSshHost` iba z `LocalSubnet`, predvolené pravidlo `OpenSSH-Server-In-TCP` je vypnuté,
+- VM je na Hyper-V Default Switch, teda za NAT laptopu. Z firemnej siete port 22 nevidno.
+
+Na produkčných a inžinierskych PC sa SSH nezapína.
+
+Vypnutie, vo VM ako správca:
+
+```powershell
+Stop-Service sshd; Set-Service sshd -StartupType Disabled; Disable-NetFirewallRule -Name TiaSbomSshHost
+```
+
 ## Tokeny
 
 ```mermaid
@@ -87,13 +107,15 @@ flowchart TD
 - `token.bin` vie dešifrovať iba rovnaký Windows používateľ na rovnakom stroji. Bežiaci program tohto používateľa ho však prečíta tiež.
 - Pri úniku token okamžite zrušte v Gitea.
 - CLI číta aj premennú `GITEA_TOKEN`, je určená pre CI.
+- Testovací účet `sbom-test` existuje iba vo vývojovej Gitea, bez práv admina. Jeho tokeny sú vo WSL v `~/.config/tiasbom-test.env` s právami 600.
+- Okno hlásenia kopíruje text cez Ctrl+C. Hláška nikdy neobsahuje token.
 
 ## Openness
 
 - Členstvo v skupine `Siemens TIA Openness` dáva programom prístup k TIA. Pridávajte iba potrebných používateľov.
 - Okno brány Openness potvrdzujte iba pre program, ktorý poznáte.
 - Add-in má `TIA.ReadOnly`, projekt nemení.
-- Zdroj `.addin` kontrolujte. V produkcii používajte iba podpísané balíky z IT.
+- Zdroj `.addin` kontrolujte. V produkcii používajte iba podpísané balíky z IT. Dnešný balík podpísaný nie je, TIA pri aktivácii ukazuje **Unsigned** a žiada všetky oprávnenia používateľa.
 - V21 beží add-in s `UnrestrictedAccess` a plnou dôverou, keďže schéma nemá oprávnenie pre DPAPI. Sprísnenie je otvorené.
 
 ## Práca s Claude

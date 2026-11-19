@@ -15,6 +15,9 @@ namespace TiaSbom.AddIn
         /// <summary>Where the last entry went, or why it could not be written.</summary>
         public static string Status { get; private set; } = "nothing written yet";
 
+        /// <summary>The log file, shown in error messages so the user can send it. Null until a line was written.</summary>
+        public static string FilePath { get; private set; }
+
         public static void Write(string message)
         {
             string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}";
@@ -49,6 +52,7 @@ namespace TiaSbom.AddIn
                 string file = Path.Combine(path, FileName);
                 File.AppendAllText(file, line);
                 Status = "log: " + file;
+                FilePath = file;
                 return true;
             }
             catch (Exception ex)
