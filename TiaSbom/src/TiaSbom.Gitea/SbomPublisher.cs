@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TiaSbom.Core;
@@ -19,7 +20,8 @@ namespace TiaSbom.Gitea
     /// </summary>
     public static class SbomPublisher
     {
-        private const int Attempts = 3;
+        private const int Attempts = 5;
+        private static readonly Random Jitter = new Random();
 
         public static async Task<PublishResult> PublishAsync(GiteaClient gitea, string key, ProjectSnapshot snapshot, string json)
         {
@@ -37,10 +39,15 @@ namespace TiaSbom.Gitea
                     UploadResult upload = await gitea.UploadSbomAsync(key, plan.VersionName, snapshot.ProjectName, json, readme).ConfigureAwait(false);
                     return new PublishResult { VersionName = plan.VersionName, Url = upload.Url, TagProblem = upload.TagProblem };
                 }
-                catch (GiteaException ex) when (ex.IsConflict && attempt < Attempts)
+                // Gitea 28 reports a lost race also as 500 "PushOutOfDate" with an empty message. A retry is safe: when the
+                // first write did land, the plan finds the same signature and writes nothing.
+                catch (GiteaException ex) when ((ex.IsConflict || (int)ex.StatusCode >= 500) && attempt < Attempts)
                 {
-                    // Next attempt reads the repository again.
+                    // Next attempt reads the repository again. A random pause keeps two losers from colliding once more.
                 }
+                int pause;
+                lock (Jitter) pause = Jitter.Next(200, 600) * attempt;
+                await Task.Delay(pause).ConfigureAwait(false);
             }
         }
     }

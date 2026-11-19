@@ -76,6 +76,9 @@ Dokumentácia je súčasť zmeny. Úloha nie je hotová, kým nesedí.
 | Kód, štruktúra, známy problém | `docs/06-kod.md` |
 | Nová chyba a jej riešenie | `docs/08-riesenie-problemov.md` |
 | Inštalátor, `tiasbom.env`, hromadné nasadenie | `docs/09-instalacia.md` |
+| Postup pre používateľa, screenshoty | `docs/10-pouzivatelska-prirucka.md`, obrázky cez `TiaSbom/tools/redact-screenshot.ps1` |
+| Nový alebo zmenený chybový kód `TS-…` | `docs/11-chybove-hlasky.md` |
+| Testy, automatizácia VM | `docs/12-automaticke-testy.md` |
 | Konkrétne stroje, adresy, projekty | `docs/local/environment.md`, nikdy tracked dokumenty |
 
 Na konci každého chatu, v ktorom sa niečo zmenilo:

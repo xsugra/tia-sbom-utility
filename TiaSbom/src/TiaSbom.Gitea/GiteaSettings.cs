@@ -31,7 +31,10 @@ namespace TiaSbom.Gitea
             if (!File.Exists(path))
                 throw new FileNotFoundException("TiaSbom configuration not found. Ask IT to deploy it.", path);
 
-            var values = Core.Json.Parse(File.ReadAllText(path)) as Dictionary<string, object>
+            object parsed;
+            try { parsed = Core.Json.Parse(File.ReadAllText(path)); }
+            catch (FormatException ex) { throw new InvalidDataException($"{path} is not valid JSON: {ex.Message}", ex); }
+            var values = parsed as Dictionary<string, object>
                 ?? throw new InvalidDataException($"{path} must contain a JSON object.");
 
             var settings = new GiteaSettings
@@ -46,6 +49,12 @@ namespace TiaSbom.Gitea
 
             if (string.IsNullOrWhiteSpace(settings.BaseUrl) || string.IsNullOrWhiteSpace(settings.Owner))
                 throw new InvalidDataException($"BaseUrl and Owner must be set in {path}.");
+            // A bad address would otherwise fail later, inside HttpClient, with a message nobody can act on.
+            if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out Uri address) ||
+                (address.Scheme != Uri.UriSchemeHttp && address.Scheme != Uri.UriSchemeHttps))
+                throw new InvalidDataException($"BaseUrl '{settings.BaseUrl}' in {path} must be an http:// or https:// address.");
+            if (settings.TimeoutSeconds < 1 || settings.TimeoutSeconds > 600)
+                throw new InvalidDataException($"TimeoutSeconds in {path} must be between 1 and 600.");
             return settings;
         }
     }

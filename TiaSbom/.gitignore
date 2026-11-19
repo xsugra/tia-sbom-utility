@@ -34,3 +34,6 @@ sbom*.json
 *.env
 !*.env.example
 dist/
+
+# Test results
+TestResults/

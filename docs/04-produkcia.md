@@ -100,9 +100,19 @@ Rozhodnutie je otvorené. Pri servisnom tokene nastavte práva súboru tak, aby 
 1. Zmeňte `Author` v `AddInPublisherConfig.*.xml`.
 2. Podpíšte balík firemným certifikátom. Publisher podporuje `Certificates` v konfigurácii. Postup je nutné overiť.
 3. Rozhodnite, ktoré buildy sa nasadzujú podľa [testov](07-testovanie-verzii.md).
-4. IT nasadí `.addin` do priečinka, ktorý TIA číta. V21 ukazuje skupinu *Corporate Add-Ins*, jej cesta nie je overená.
-5. Overte, či musia byť používatelia v skupine `Siemens TIA Openness`. Pri CLI je to povinné, pri add-ine to nie je overené.
-6. V21 má `UnrestrictedAccess`, overte akceptáciu bezpečnosťou.
+4. IT nasadí `.addin` inštalátorom s `ADDIN_SCOPE=corporate`. Na V21 je to `C:\ProgramData\Siemens\Automation\Portal V21\CorporateAddIns`, overené 2026-11-18. Pozri [09-instalacia.md](09-instalacia.md#nasadenie-na-10-až-20-počítačov).
+5. Počítajte s tým, že **každý používateľ add-in aktivuje sám, aj po každej aktualizácii**. Overené na V21 pri nepodpísanom balíku. Či podpis niečo zmení, treba zistiť.
+6. Overte, či musia byť používatelia v skupine `Siemens TIA Openness`. Pri CLI je to povinné, pri add-ine to nie je overené.
+7. V21 má `UnrestrictedAccess`, overte akceptáciu bezpečnosťou.
+
+### Adresa servera
+
+Vývoj ukázal, že meniaca sa adresa je najčastejšia príčina chýb (`TS-NET-04`). Na Hyper-V Default Switch sa adresa mení po reštarte laptopu.
+
+- Produkčná Gitea musí mať **stálu adresu**: DNS meno, napríklad `gitea.firma.local`, alebo pevnú IP. `portproxy` na serveri smeruje iba z jeho stálej adresy do WSL podľa `gitea-server`, nikdy nie na adresu, ktorá sa mení.
+- **HTTPS** s certifikátom, ktorému inžinierske PC dôverujú. Inak každý export skončí `TS-TLS-01`. Firemnú CA nasadí IT.
+- Firewall servera (Windows alebo ESET) povolí 443 zo siete inžinierov.
+- Po nasadení na každom PC `install.cmd` musí skončiť kódom 0, potom `check.cmd` u používateľa.
 
 ### Používateľ
 
@@ -137,6 +147,8 @@ Pozri [gitea-server: sprava.md](https://github.com/xsugra/gitea-server/blob/main
 - [ ] Registrácia je vypnutá a heslá sú nové, nie z vývoja.
 - [ ] Záloha prebehne automaticky a obnova je otestovaná.
 - [ ] Add-in je podpísaný a nasadený cez IT.
+- [ ] `install.cmd` skončí na každom PC kódom 0 a `check.cmd` u používateľa hlási `RESULT: OK`.
+- [ ] `./test.sh` prejde na vydávanej verzii, integračné testy proti vývojovej Gitea.
 - [ ] Bežný používateľ bez práv správcu dokončí export.
 - [ ] Každá používaná verzia TIA prešla [testom](07-testovanie-verzii.md).
 - [ ] Bezpečnostné pravidlá a vlastník servera sú schválené.

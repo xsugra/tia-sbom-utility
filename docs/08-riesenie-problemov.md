@@ -4,7 +4,9 @@ Každá položka vznikla pri skutočnom testovaní. Nové chyby dopisujte sem.
 
 ## Čo vidí používateľ
 
-Add-in prekladá chyby v `ExportError.cs`. Hláška povie, čo sa stalo a čo robiť, technické detaily sú v `addin.log`.
+Add-in prekladá chyby v `ExportError.cs`. Každá hláška má kód `TS-…`, povie, čo sa stalo a čo robiť, a uvádza cestu k `addin.log`. Zoznam kódov je v [11-chybove-hlasky.md](11-chybove-hlasky.md).
+
+Prvý krok pri každej sieťovej chybe: `C:\ProgramData\TiaSbom\check.cmd`. Ukáže prvý nefunkčný krok.
 
 ## Prvá diagnostika
 
@@ -48,8 +50,12 @@ Get-Content "$env:APPDATA\TiaSbom\addin.log" -Tail 30
 | `SecurityException: Request failed`, `LinkDemand`, `PermissionSet` | Kód volá API vyžadujúce plnú dôveru | Pozri [sandbox](06-kod.md#sandbox-v17) |
 | `The type initializer for System.Text.Json...` | NuGet závislosti v procese TIA | Žiadne NuGet balíky |
 | `set_Text ... read-only context` | `TIA.ReadOnly` nedovoľuje meniť text `ExclusiveAccess` | Pre každú fázu nový `ExclusiveAccess` |
-| Okno nie je vidieť | Dialóg bez vlastníka môže skončiť za TIA | `Ui.Run` s topmost vlastníkom |
-| Token sa odmieta | Gitea vrátila 401 alebo 403 | Vytvoriť nový s oprávneniami podľa [tokenov](03-gitea-server.md#tokeny) |
+| Po kliknutí na Export sa nič neukáže | Do 0.2.10: na V21 beží add-in v samostatnom procese, dialóg aj `MessageBox` sa otvorili **za TIA**, `MessageBox` bez ikony na paneli úloh. Zopakované 2026-11-18 | Opravené v 0.2.11: vlastné okno hlásenia, `TopMost`, ikona **SBOM Export** na paneli úloh. Pri staršej verzii Alt+Tab |
+| Ikona **SBOM Export** bliká na oranžovo | Windows nedovolí oknu z iného procesu prevziať klávesnicu | Kliknúť na ikonu, okno je nad TIA |
+| Po aktualizácii add-in nefunguje, stav „–“ | TIA pri výmene súboru add-in deaktivuje, overené na V21 | Znova aktivovať, pozri [príručku](10-pouzivatelska-prirucka.md#1-aktivácia-add-inu-raz) |
+| Pri aktivácii upozornenie **Unsigned** | Add-in nie je podpísaný | Očakávané, potvrdiť **Yes** |
+| `TS-AUTH-01` alebo `TS-AUTH-02` | Gitea vrátila 401, alebo 403 s „required scope“. Add-in token zabudne | Vytvoriť nový s oprávneniami podľa [tokenov](03-gitea-server.md#tokeny) |
+| Súbežný export hlásil „may not write to this project“ | Do 0.2.10: Gitea 28 odpovedá na prehratý súbeh `403 cannot lock ref` alebo `500 PushOutOfDate` | Opravené v 0.2.11: až 5 pokusov. Inak `TS-GIT-04`, exportovať znova |
 | Ticho bez výsledku po kliknutí | Stará verzia v Details | Prvá diagnostika |
 
 ## CLI a Openness
@@ -84,7 +90,12 @@ Výpis položiek:
 
 | Príznak | Príčina | Riešenie |
 |---|---|---|
-| `An error occurred while sending the request`, timeout | Zlá adresa v `config.json`, alebo beží mimo WSL | [Adresa prepínača](03-gitea-server.md#zmena-adresy-prepínača) |
+| `TS-NET-04`, staršie `An error occurred while sending the request` | Zlá adresa v `config.json`. Vo vývoji sa po reštarte laptopu mení adresa Default Switch. 2026-11-18 mali `portproxy`, prepínač a `config.json` vo VM tri rôzne adresy | [Adresa prepínača](03-gitea-server.md#zmena-adresy-prepínača), vo VM znova `install.cmd` alebo `update-vm.cmd` |
+| `TS-NET-02` | Port odmieta spojenie, Gitea nebeží | `docker compose ps` vo WSL |
+| `TS-NET-01` | DNS meno neexistuje | Opraviť `GITEA_BASE_URL` alebo DNS |
+| `TS-TLS-01` | Certifikát HTTPS nie je dôveryhodný | Nainštalovať firemnú CA. Vo vývoji `https://localhost` s `tls internal` |
+| Inštalátor skončí kódom 3 | Test spojenia zlyhal, kód je v `install.log` | Podľa kódu `TS-…` |
+| `check` hlásil `TS-AUTH-02` pri tokene podľa dokumentácie | Pred opravou volal `/user`, ktoré potrebuje `read:user` | Opravené, token sa overuje na zozname projektov |
 | Vo VM zlyhá `Test-NetConnection` | WSL nebeží, zmenila sa adresa, VM je na inom prepínači | Spustiť WSL, skontrolovať `portproxy` a sieť VM |
 | Prihlásenie na web nič neurobí | Otvorené cez HTTP | Použiť `https://localhost` |
 | `403 ... required scope` | Slabý token | Pridať oprávnenia organization a repository |
@@ -111,3 +122,16 @@ Výpis položiek:
 | Kód add-inu nie je na GitHube | `*.addin` zodpovedá priečinku `TiaSbom.AddIn` | Výnimka `!src/TiaSbom.AddIn/` v `.gitignore` |
 | Commit obsahuje cudzie zmeny | V indexe boli staged súbory používateľa | `git commit -- <súbory>` |
 | Push išiel na inú vetvu | Vetva sa medzitým zmenila | Vždy `git branch --show-current` pred pushom |
+
+## Automatizácia VM
+
+Pozri [12-automaticke-testy.md](12-automaticke-testy.md#automatizácia-vm-z-laptopu).
+
+| Príznak | Príčina | Riešenie |
+|---|---|---|
+| `Register-ScheduledTask: No mapping between account names and security IDs` | Principal `WORKGROUP\používateľ` | `POČÍTAČ\používateľ` |
+| Screenshot je čierny alebo zlyhá | Enhanced Session odpojená, plocha nemá obraz | Basic session, používateľ prihlásený |
+| Klik do kontextového menu TIA nič neurobí | Menu sa zavrie pri štarte ďalšieho procesu, hover cez `SetCursorPos` nefunguje | Celý postup v jednom behu `click.ps1`, položky cez `ocr:` |
+| Spustil sa iný add-in | Poradie položiek pod *Add-Ins* sa mení | Nikdy šípkami, iba `ocr:` |
+| `running scripts is disabled` | Execution Policy | `powershell -ExecutionPolicy Bypass -File …` |
+| Terminál v aplikácii Claude nemá práva správcu | Beží pod bežným účtom | Skripty správcu spúšťať v okne *Run as administrator* |
