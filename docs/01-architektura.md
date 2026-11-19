@@ -186,6 +186,7 @@ Starší projekt sa neotvára cez `OpenWithUpgrade`. Vznikla by povýšená kóp
 | Repozitár na projekt | Prehľadnosť, archivácia po zákazke |
 | Repozitáre viditeľné v rámci organizácie | Všetci majú vidieť všetky SBOM. Prístup v produkcii rieši [04-produkcia.md](04-produkcia.md) |
 | DPAPI cez `crypt32` | Šifrovaný token na používateľa, funguje v sandboxe |
+| Add-in sa nepodpisuje (2026-11-19) | Certifikát a jeho správa sa pre 10 až 20 PC neoplatia. Používateľ pri aktivácii potvrdí **Unsigned**, balík nasadzuje iba IT |
 
 ## Licencie
 
