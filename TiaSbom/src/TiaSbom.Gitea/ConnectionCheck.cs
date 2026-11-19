@@ -69,7 +69,7 @@ namespace TiaSbom.Gitea
                 bool reachable = await StepAsync(steps, giteaUrl, "Gitea server", async () =>
                 {
                     version = await gitea.GetServerVersionAsync().ConfigureAwait(false);
-                    return "Gitea " + version;
+                    return version != null ? "Gitea " + version : "Gitea reachable, version hidden because sign-in is required";
                 }).ConfigureAwait(false);
                 if (!reachable || !hasToken) return steps;
 

@@ -7,6 +7,7 @@
     .\install.ps1 -Uninstall      remove the Add-In and config.json
 
   Settings come from tiasbom.env next to this script. Run as administrator, or as SYSTEM from a GPO startup script.
+  GITEA_CA_CERT adds one root certificate to the trusted roots of the PC; -Uninstall removes it again.
 
   Exit codes: 0 done, 1 failed, 2 TIA found but no package for any of its versions,
               3 installed, but Gitea is not reachable from this PC (see install.log for the TS- code).
@@ -29,7 +30,7 @@ if (-not $EnvFile) { $EnvFile = Join-Path $PSScriptRoot 'tiasbom.env' }
 # TIA versions with their own Add-In build. Others are reported, never served with a package of another version.
 $BuildableVersions = 17, 18, 19, 20, 21
 $KnownKeys = 'TIA_ROOT', 'GITEA_BASE_URL', 'GITEA_OWNER', 'GITEA_BRANCH', 'GITEA_PRIVATE_REPOS',
-             'GITEA_TIMEOUT_SECONDS', 'GITEA_TOKEN', 'OPENNESS_MEMBERS', 'ADDIN_SCOPE'
+             'GITEA_TIMEOUT_SECONDS', 'GITEA_TOKEN', 'OPENNESS_MEMBERS', 'ADDIN_SCOPE', 'GITEA_CA_CERT'
 $OpennessGroup = 'Siemens TIA Openness'
 $script:Warnings = 0
 $script:ConnectionFailed = $false
@@ -139,9 +140,21 @@ function Test-GiteaConnection([hashtable]$Settings) {
         Write-Step "Connection test: Gitea $($answer.version) reachable at $($Settings['GITEA_BASE_URL'])"
     }
     catch {
-        Write-Step "Connection test $(Get-ErrorCode $_): $($Settings['GITEA_BASE_URL']) not reachable from this PC: $($_.Exception.Message)" 'WARN'
-        $script:ConnectionFailed = $true
-        return
+        # REQUIRE_SIGNIN_VIEW=true: Gitea answers 403 with a JSON message even for /version. The server is reachable.
+        $response = $_.Exception.Response
+        $status = if ($response) { [int]$response.StatusCode } else { 0 }
+        $body = "$($_.ErrorDetails.Message)"
+        if (-not $body -and $response) {
+            try { $body = (New-Object IO.StreamReader($response.GetResponseStream())).ReadToEnd() } catch { }
+        }
+        if (($status -eq 401 -or $status -eq 403) -and $body -match '^\s*\{.*"message"') {
+            Write-Step "Connection test: Gitea reachable at $($Settings['GITEA_BASE_URL']), version hidden because sign-in is required"
+        }
+        else {
+            Write-Step "Connection test $(Get-ErrorCode $_): $($Settings['GITEA_BASE_URL']) not reachable from this PC: $($_.Exception.Message)" 'WARN'
+            $script:ConnectionFailed = $true
+            return
+        }
     }
 
     $token = $Settings['GITEA_TOKEN']
@@ -159,6 +172,63 @@ function Test-GiteaConnection([hashtable]$Settings) {
         Write-Step "Connection test $(Get-ErrorCode $_): service token or organization $($Settings['GITEA_OWNER']) rejected: $($_.Exception.Message)" 'WARN'
         $script:ConnectionFailed = $true
     }
+}
+
+# GITEA_CA_CERT: the root certificate of a Gitea that has no certificate of the company CA, e.g. Caddy "tls internal".
+# Only this one certificate goes to the trusted roots of the PC. Its thumbprint is kept, so a changed or removed setting
+# and -Uninstall take out exactly what the installer added, never anything else.
+$CaRecord = 'gitea-ca.thumbprint'
+
+function Remove-GiteaCa([string]$Thumbprint) {
+    if (-not $Thumbprint) { return }
+    $store = New-Object Security.Cryptography.X509Certificates.X509Store('Root', 'LocalMachine')
+    $store.Open('ReadWrite')
+    try {
+        foreach ($cert in @($store.Certificates.Find('FindByThumbprint', $Thumbprint, $false))) {
+            if ($Check) { Write-Step "Would remove trusted Gitea CA $Thumbprint" }
+            else { $store.Remove($cert); Write-Step "Removed trusted Gitea CA '$($cert.Subject)' $Thumbprint" }
+        }
+    }
+    finally { $store.Close() }
+    if (-not $Check) { Remove-Item -LiteralPath (Join-Path $ConfigDir $CaRecord) -Force -ErrorAction SilentlyContinue }
+}
+
+function Get-RecordedCa {
+    $record = Join-Path $ConfigDir $CaRecord
+    if (Test-Path -LiteralPath $record) { return (Get-Content -LiteralPath $record -Raw).Trim() }
+    return $null
+}
+
+function Install-GiteaCa([hashtable]$Settings) {
+    $recorded = Get-RecordedCa
+    $name = $Settings['GITEA_CA_CERT']
+    if (-not $name) {
+        if ($recorded) { Write-Step 'GITEA_CA_CERT is no longer set, removing the CA added earlier'; Remove-GiteaCa $recorded }
+        return
+    }
+    $path = if ([IO.Path]::IsPathRooted($name)) { $name } else { Join-Path (Split-Path -Parent $EnvFile) $name }
+    if (-not (Test-Path -LiteralPath $path)) { throw "GITEA_CA_CERT not found: $path" }
+
+    $cert = New-Object Security.Cryptography.X509Certificates.X509Certificate2($path)
+    if ($cert.HasPrivateKey) { throw "GITEA_CA_CERT $path contains a private key. Use only the public root certificate (.crt)." }
+    $constraints = $cert.Extensions | Where-Object { $_ -is [Security.Cryptography.X509Certificates.X509BasicConstraintsExtension] }
+    if (-not $constraints -or -not $constraints.CertificateAuthority) { throw "GITEA_CA_CERT $path is not a CA certificate." }
+    if ($cert.Subject -ne $cert.Issuer) { throw "GITEA_CA_CERT $path is not a root certificate (issuer '$($cert.Issuer)')." }
+
+    if ($recorded -and $recorded -ne $cert.Thumbprint) { Write-Step 'GITEA_CA_CERT changed, replacing the CA added earlier'; Remove-GiteaCa $recorded }
+
+    $existing = Get-ChildItem -LiteralPath "Cert:\LocalMachine\Root\$($cert.Thumbprint)" -ErrorAction SilentlyContinue
+    if ($Check) { Write-Step "Would trust Gitea CA '$($cert.Subject)' $($cert.Thumbprint)$(if ($existing) { ', already trusted' })"; return }
+    if (-not $existing) {
+        $store = New-Object Security.Cryptography.X509Certificates.X509Store('Root', 'LocalMachine')
+        $store.Open('ReadWrite')
+        try { $store.Add($cert) } finally { $store.Close() }
+    }
+    # Recorded only when the installer added it: a CA the PC trusted before stays on uninstall.
+    if (-not $existing -or $recorded -eq $cert.Thumbprint) {
+        Set-Content -LiteralPath (Join-Path $ConfigDir $CaRecord) -Value $cert.Thumbprint -Encoding ASCII
+    }
+    Write-Step "Trusted Gitea CA '$($cert.Subject)' $($cert.Thumbprint), valid until $($cert.NotAfter.ToString('yyyy-MM-dd'))$(if ($existing) { ', was already trusted' })"
 }
 
 function Find-Package([int]$Version) {
@@ -301,6 +371,7 @@ function Uninstall-All([hashtable]$Settings, [int[]]$Versions, [string]$TiaRoot)
         if ($Check) { Write-Step "Would remove $item" }
         else { Remove-Item -LiteralPath $item -Recurse -Force; Write-Step "Removed $item" }
     }
+    Remove-GiteaCa (Get-RecordedCa)
     $config = Join-Path $ConfigDir 'config.json'
     if (Test-Path -LiteralPath $config) {
         if ($Check) { Write-Step "Would remove $config" }
@@ -351,6 +422,7 @@ try {
     }
 
     Write-Config $settings
+    Install-GiteaCa $settings
     Install-Tools
     Add-OpennessMembers $settings['OPENNESS_MEMBERS']
     Test-GiteaConnection $settings
