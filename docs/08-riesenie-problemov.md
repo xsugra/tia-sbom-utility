@@ -94,6 +94,7 @@ Výpis položiek:
 | `TS-NET-02` | Port odmieta spojenie, Gitea nebeží | `docker compose ps` vo WSL |
 | `TS-NET-01` | DNS meno neexistuje | Opraviť `GITEA_BASE_URL` alebo DNS |
 | `TS-TLS-01` | Certifikát HTTPS nie je dôveryhodný | Nainštalovať firemnú CA. Vo vývoji `https://localhost` s `tls internal` |
+| Po `update-vm.cmd` chýba `C:\ProgramData\TiaSbom\check.cmd` | Do 2026-11-19 ho inštalátor kopíroval iba z balíka `package.ps1`, nie pri `-Build` | Opravené, inštalátor vezme zostavený `tiasbom.exe`. Dovtedy spustiť `tiasbom.exe --check` z `src\TiaSbom.Cli\bin\…\net48` |
 | Inštalátor skončí kódom 3 | Test spojenia zlyhal, kód je v `install.log` | Podľa kódu `TS-…` |
 | `check` hlásil `TS-AUTH-02` pri tokene podľa dokumentácie | Pred opravou volal `/user`, ktoré potrebuje `read:user` | Opravené, token sa overuje na zozname projektov |
 | Vo VM zlyhá `Test-NetConnection` | WSL nebeží, zmenila sa adresa, VM je na inom prepínači | Spustiť WSL, skontrolovať `portproxy` a sieť VM |
