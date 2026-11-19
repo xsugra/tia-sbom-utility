@@ -8,7 +8,8 @@
 
   Settings come from tiasbom.env next to this script. Run as administrator, or as SYSTEM from a GPO startup script.
 
-  Exit codes: 0 done, 1 failed, 2 TIA found but no package for any of its versions.
+  Exit codes: 0 done, 1 failed, 2 TIA found but no package for any of its versions,
+              3 installed, but Gitea is not reachable from this PC (see install.log for the TS- code).
 #>
 [CmdletBinding()]
 param(
@@ -16,7 +17,8 @@ param(
     [string]$ConfigDir = (Join-Path $env:ProgramData 'TiaSbom'),
     [switch]$Check,
     [switch]$Build,
-    [switch]$Uninstall
+    [switch]$Uninstall,
+    [switch]$SkipConnectionTest
 )
 
 $ErrorActionPreference = 'Stop'
@@ -27,9 +29,10 @@ if (-not $EnvFile) { $EnvFile = Join-Path $PSScriptRoot 'tiasbom.env' }
 # TIA versions with their own Add-In build. Others are reported, never served with a package of another version.
 $BuildableVersions = 17, 18, 19, 20, 21
 $KnownKeys = 'TIA_ROOT', 'GITEA_BASE_URL', 'GITEA_OWNER', 'GITEA_BRANCH', 'GITEA_PRIVATE_REPOS',
-             'GITEA_TIMEOUT_SECONDS', 'GITEA_TOKEN', 'OPENNESS_MEMBERS'
+             'GITEA_TIMEOUT_SECONDS', 'GITEA_TOKEN', 'OPENNESS_MEMBERS', 'ADDIN_SCOPE'
 $OpennessGroup = 'Siemens TIA Openness'
 $script:Warnings = 0
+$script:ConnectionFailed = $false
 
 function Write-Step([string]$Message, [string]$Level = 'INFO') {
     $line = '{0:yyyy-MM-dd HH:mm:ss} {1,-5} {2}' -f (Get-Date), $Level, $Message
@@ -72,12 +75,90 @@ function Get-TiaVersions([string]$Root) {
     return @($versions | Sort-Object)
 }
 
-# V17 and V19 load from the installation folder. V21 is only verified with the per-user folder.
+# V17 and V19 load from the installation folder. V21 has Corporate, System and User add-ins.
+# ADDIN_SCOPE=corporate uses the folder for all users of the PC, documented by Siemens for V21:
+# C:\ProgramData\Siemens\Automation\Portal V21\CorporateAddIns. Default stays the per-user folder, the verified one.
 function Get-AddInDir([hashtable]$Settings, [int]$Version, [string]$TiaRoot) {
     $key = "ADDIN_DIR_V$Version"
     if ($Settings.ContainsKey($key) -and $Settings[$key]) { return $Settings[$key] }
-    if ($Version -ge 21) { return Join-Path $env:APPDATA "Siemens\Automation\Portal V$Version\UserAddIns" }
+    if ($Version -ge 21) {
+        if ($Settings['ADDIN_SCOPE'] -eq 'corporate') {
+            return Join-Path $env:ProgramData "Siemens\Automation\Portal V$Version\CorporateAddIns"
+        }
+        return Join-Path $env:APPDATA "Siemens\Automation\Portal V$Version\UserAddIns"
+    }
     return Join-Path $TiaRoot "Portal V$Version\AddIns"
+}
+
+# Maps a failed web request to the codes of docs/11-chybove-hlasky.md.
+function Get-ErrorCode($ErrorRecord) {
+    $e = $ErrorRecord.Exception
+    while ($e) {
+        if ($e -is [System.Security.Authentication.AuthenticationException]) { return 'TS-TLS-01' }
+        if ($e -is [System.Net.WebException]) {
+            switch ($e.Status) {
+                'NameResolutionFailure' { return 'TS-NET-01' }
+                'TrustFailure' { return 'TS-TLS-01' }
+                'SecureChannelFailure' { return 'TS-TLS-01' }
+                'Timeout' { return 'TS-NET-04' }
+                'ConnectFailure' {
+                    $socket = $e.InnerException
+                    while ($socket -and $socket -isnot [System.Net.Sockets.SocketException]) { $socket = $socket.InnerException }
+                    if ($socket -and $socket.SocketErrorCode -eq 'ConnectionRefused') { return 'TS-NET-02' }
+                    return 'TS-NET-03'
+                }
+                'ProtocolError' {
+                    $status = [int]$e.Response.StatusCode
+                    if ($status -eq 401) { return 'TS-AUTH-03' }
+                    if ($status -eq 404) { return 'TS-GIT-01' }
+                    if ($status -ge 500) { return 'TS-GIT-05' }
+                    return "HTTP $status"
+                }
+            }
+        }
+        $e = $e.InnerException
+    }
+    return 'TS-UNK-01'
+}
+
+# The same checks as tiasbom --check, so a wrong address or a blocked port shows up at installation, not at the first export.
+# A personal token cannot be checked here: it belongs to the user, not to the installing account.
+function Test-GiteaConnection([hashtable]$Settings) {
+    if ($Check -or $SkipConnectionTest) { return }
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
+    $base = $Settings['GITEA_BASE_URL'].TrimEnd('/') + '/api/v1'
+    $timeout = 15
+
+    try {
+        $answer = Invoke-RestMethod -Uri "$base/version" -TimeoutSec $timeout -UseBasicParsing
+        if (-not $answer.version) {
+            Write-Step "Connection test TS-API-01: $base/version does not answer like Gitea. Check GITEA_BASE_URL." 'WARN'
+            $script:ConnectionFailed = $true
+            return
+        }
+        Write-Step "Connection test: Gitea $($answer.version) reachable at $($Settings['GITEA_BASE_URL'])"
+    }
+    catch {
+        Write-Step "Connection test $(Get-ErrorCode $_): $($Settings['GITEA_BASE_URL']) not reachable from this PC: $($_.Exception.Message)" 'WARN'
+        $script:ConnectionFailed = $true
+        return
+    }
+
+    $token = $Settings['GITEA_TOKEN']
+    if (-not $token) {
+        Write-Step 'Connection test: no service token, each user enters a personal token at the first export'
+        return
+    }
+    $headers = @{ Authorization = "token $token" }
+    try {
+        $user = Invoke-RestMethod -Uri "$base/user" -Headers $headers -TimeoutSec $timeout -UseBasicParsing
+        $null = Invoke-RestMethod -Uri "$base/orgs/$([Uri]::EscapeDataString($Settings['GITEA_OWNER']))" -Headers $headers -TimeoutSec $timeout -UseBasicParsing
+        Write-Step "Connection test: service token of $($user.login) accepted, organization $($Settings['GITEA_OWNER']) found"
+    }
+    catch {
+        Write-Step "Connection test $(Get-ErrorCode $_): service token or organization $($Settings['GITEA_OWNER']) rejected: $($_.Exception.Message)" 'WARN'
+        $script:ConnectionFailed = $true
+    }
 }
 
 function Find-Package([int]$Version) {
@@ -162,6 +243,19 @@ function Write-Config([hashtable]$Settings) {
     Write-Step "Wrote $path ($summary)"
 }
 
+# Copies tiasbom.exe and check.cmd to %ProgramData%\TiaSbom, so every user can check the connection later.
+function Install-Tools {
+    $source = Join-Path $PSScriptRoot 'tools'
+    if (-not (Test-Path -LiteralPath (Join-Path $source 'tiasbom.exe'))) { return }
+    $target = Join-Path $ConfigDir 'tools'
+    if ($Check) { Write-Step "Would copy tools to $target"; return }
+    New-Item -ItemType Directory -Force $target | Out-Null
+    Copy-Item -Path (Join-Path $source '*') -Destination $target -Force
+    $launcher = Join-Path $PSScriptRoot 'check.cmd'
+    if (Test-Path -LiteralPath $launcher) { Copy-Item -LiteralPath $launcher -Destination $ConfigDir -Force }
+    Write-Step "Tools: $target, users run $(Join-Path $ConfigDir 'check.cmd')"
+}
+
 function Add-OpennessMembers([string]$Members) {
     if (-not $Members) { return }
     if (-not (Get-LocalGroup -Name $OpennessGroup -ErrorAction SilentlyContinue)) {
@@ -188,6 +282,11 @@ function Uninstall-All([hashtable]$Settings, [int[]]$Versions, [string]$TiaRoot)
             Remove-Item -LiteralPath $file.FullName -Force
             Write-Step "Removed $($file.FullName)"
         }
+    }
+    foreach ($item in (Join-Path $ConfigDir 'tools'), (Join-Path $ConfigDir 'check.cmd')) {
+        if (-not (Test-Path -LiteralPath $item)) { continue }
+        if ($Check) { Write-Step "Would remove $item" }
+        else { Remove-Item -LiteralPath $item -Recurse -Force; Write-Step "Removed $item" }
     }
     $config = Join-Path $ConfigDir 'config.json'
     if (Test-Path -LiteralPath $config) {
@@ -239,13 +338,16 @@ try {
     }
 
     Write-Config $settings
+    Install-Tools
     Add-OpennessMembers $settings['OPENNESS_MEMBERS']
+    Test-GiteaConnection $settings
 
     if (Get-Process -Name 'Siemens.Automation.Portal' -ErrorAction SilentlyContinue) {
         Write-Step 'TIA Portal is running, restart it to load the Add-In' 'WARN'
     }
     Write-Step "Finished: $installed of $($versions.Count) TIA versions, $($script:Warnings) warnings"
     if ($installed -eq 0) { exit 2 }
+    if ($script:ConnectionFailed) { exit 3 }
     exit 0
 }
 catch {

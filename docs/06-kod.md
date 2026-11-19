@@ -1,6 +1,6 @@
 # Dokumentácia kódu
 
-Riešenie je v `TiaSbom/`. Má približne 2000 riadkov C#, bez NuGet závislostí a bez testovacieho projektu.
+Riešenie je v `TiaSbom/`. Produkčný kód má približne 2300 riadkov C# bez NuGet závislostí. Testovací projekt je v `tests/`, pozri [12-automaticke-testy.md](12-automaticke-testy.md).
 
 ## Štruktúra
 
@@ -8,14 +8,19 @@ Riešenie je v `TiaSbom/`. Má približne 2000 riadkov C#, bez NuGet závislost�
 TiaSbom/
 ├── Directory.Build.props     spoločné nastavenia, voľba API, cesty k DLL
 ├── build.ps1                 build CLI a balenie add-inu
+├── test.sh, test.ps1         automatické testy, WSL a Windows
 ├── TiaSbom.sln
-├── deploy/config.example.json
-└── src/
-    ├── TiaSbom.Core/         bez závislosti na TIA
-    ├── TiaSbom.Tia/          čítanie cez Openness
-    ├── TiaSbom.Gitea/        REST klient, konfigurácia, token
-    ├── TiaSbom.Cli/          tiasbom.exe
-    └── TiaSbom.AddIn/        add-in do TIA
+├── deploy/                   install, package, check.cmd, tiasbom.env.example
+├── src/
+│   ├── TiaSbom.Core/         bez závislosti na TIA
+│   ├── TiaSbom.Tia/          čítanie cez Openness
+│   ├── TiaSbom.Gitea/        REST klient, konfigurácia, token, chybové kódy, kontrola spojenia
+│   ├── TiaSbom.Cli/          tiasbom.exe
+│   └── TiaSbom.AddIn/        add-in do TIA
+├── tests/TiaSbom.Tests/      xUnit, net8.0 a net48, schéma CycloneDX 1.6
+└── tools/
+    ├── redact-screenshot.ps1 orezanie a zakrytie screenshotov pre docs/img
+    └── vm-remote/            ovládanie VM s TIA cez SSH, OCR, screenshoty
 ```
 
 ## Závislosti projektov
@@ -114,8 +119,21 @@ flowchart TD
 | `GiteaClient.cs` | REST API cez `HttpClient` |
 | `GiteaSettings.cs` | Načítanie `%ProgramData%\TiaSbom\config.json` |
 | `TokenStore.cs` | DPAPI cez `crypt32`, `%APPDATA%\TiaSbom\token.bin` |
-| `SbomPublisher.cs` | Spoločný zápis pre add-in a CLI, opakovanie pri súbehu |
-| `ExportError.cs` | Technické chyby preložené pre používateľa |
+| `SbomPublisher.cs` | Spoločný zápis pre add-in a CLI. Pri súbehu (409, 422, 403 `cannot lock ref`) a pri 5xx až 5 pokusov s náhodným odstupom |
+| `ExportError.cs` | Technické chyby preložené pre používateľa, kódy `TS-…` podľa [11-chybove-hlasky.md](11-chybove-hlasky.md) |
+| `ConnectionCheck.cs` | `tiasbom --check`: konfigurácia, token, server, organizácia, oprávnenie, zastaví sa na prvej chybe |
+
+Chyby z Gitea sú `GiteaException` s `Kind`: `Http`, `NotGitea` (HTML namiesto API), `MissingOrganization`, `Archived`, `InvalidContent`. `ExportError.Explain` hľadá príčinu aj vo vnorených výnimkách, lebo .NET Framework a .NET 8 balia sieťové chyby inak (`WebException` verzus `SocketException`).
+
+Správanie Gitea 28.2.0 zistené integračnými testami:
+
+| Situácia | Odpoveď Gitea |
+|---|---|
+| Zlý token, aj na verejnom `/version` | 401 |
+| Token bez oprávnenia | 403 `token does not have at least one of required scope(s)` |
+| `/user` s tokenom bez `read:user` | 403 scope, preto ho export nepoužíva |
+| Prehratý súbeh zápisu | 403 `cannot lock ref`, alebo 500 s prázdnou správou (`PushOutOfDate` v logu Gitea) |
+| Organizácia s menom existujúceho používateľa | 422 `user already exists` |
 
 Volania Gitea:
 
@@ -137,11 +155,15 @@ tiasbom --project <file.apNN> | --archive <file.zapNN> | --attach
         [--upload [--key <kľúč>] [--force]]
         [--config <config.json>] [--dump-hw]
 tiasbom --login
+tiasbom --check [--config <config.json>]
 ```
+
+`--check` nepotrebuje TIA ani Openness, vracia 0 alebo 3. Spúšťa ho `check.cmd`.
 
 | Súbor | Obsah |
 |---|---|
-| `Program.cs` | Vstup, resolver DLL. Nesmie odkazovať na typy Siemens |
+| `Program.cs` | Vstup, resolver DLL. Nesmie odkazovať na typy Siemens. Chyby vypisuje s kódom `TS-…` |
+| `Check.cs` | `--check`, výpis krokov `ConnectionCheck` |
 | `OpennessLocator.cs` | Hľadanie DLL v registri, prípadne `TIASBOM_API_DIR` |
 | `App.cs` | Príkazy |
 
@@ -157,7 +179,7 @@ Portál sa vyberá v poradí `--portal`, prípona súboru, bežiaci proces, najn
 |---|---|
 | `AddInProvider.cs` | Registrácia, menu, posledná záchrana chyby |
 | `SbomExport.cs` | Tok exportu |
-| `Ui.cs` | Okná na vlastnom STA vlákne pod skrytým topmost oknom |
+| `Ui.cs` | Okná na vlastnom STA vlákne. Hlásenia sú vlastné okno, nie `MessageBox`: `TopMost`, ikona na paneli úloh, Ctrl+C kopíruje text |
 | `TokenDialog.cs`, `RepoPickerDialog.cs` | Dialógy |
 | `Log.cs` | `addin.log` v `%APPDATA%\TiaSbom`, záloha v `%TEMP%` |
 | `AddInPublisherConfig.V17.xml`, `.V19.xml` | Sandbox, vymenované oprávnenia |
@@ -195,6 +217,7 @@ Pravidlá pre add-in:
 - Typy odvodené z `AddIn` musia byť `public`, inak publisher zlyhá.
 - `SbomExport.Run` zachytí chyby a zobrazí ich. `OnExport` zachytí aj zlyhanie samotného zobrazenia a použije dialóg TIA.
 - Prvá výnimka z odkazu sa prejaví až pri JIT volanej metódy, v zásobníku teda neukáže konkrétny riadok.
+- Na V21 beží add-in v **samostatnom procese**, nie v procese TIA. Okno vlastnené skrytým oknom add-inu preto nie je automaticky nad TIA. Každé okno musí mať `TopMost` a ikonu na paneli úloh (`Ui.BringToFront`). Overené 2026-11-18.
 
 ### Sandbox V17
 
@@ -251,15 +274,17 @@ Priorita: **V** vysoká, **S** stredná, **N** nízka.
 
 | Pr. | Miesto | Problém | Návrh |
 |---|---|---|---|
-| V | `SbomBuilder` | Výstup sa nevaliduje podľa schémy CycloneDX, hoci to komentár požaduje | Validácia v teste alebo CI |
-| V | celé riešenie | Žiadne automatické testy | Testy pre `Core` bez TIA |
 | V | `SbomBuilder` | Chýba CPE | Mapovanie čísel na CPE |
+| V | `TiaSbom.AddIn` | Okná a sandbox V17: `TopMost` a Clipboard v novom okne hlásenia sú overené iba na V21 | Overiť na V17 a V19, Clipboard je ošetrený `try` |
+| S | CI | Testy sa spúšťajú ručne | GitHub Actions s `test.sh`, bez integračných testov |
+| S | `AddInPublisherConfig.*.xml` | Add-in nie je podpísaný, TIA pri aktivácii varuje **Unsigned** a po každej aktualizácii ho deaktivuje | Zistiť podpisovanie u Siemens a firemný certifikát |
 | V | GSD položky | `IV3-XXXX` nie je model, verzia je verzia popisu | Ručné doplnenie alebo mapovanie |
 | S | `App.FromFile` | Rozbalený archív ostáva v `%TEMP%\tiasbom` | Upratať po exporte |
 | S | `GiteaClient.GetVersionsAsync` | Každý export číta všetky verzie, pri stovkách verzií bude pomalý | Sledovať, prípadne čítať súhrn |
 | S | SBOM | `tia:projectPath` a `tia:exportedBy` sú viditeľné všetkým | Posúdiť, či sú potrebné |
 | S | V21 konfigurácia | `UnrestrictedAccess` dáva add-inu plnú dôveru | Vymenované oprávnenia, keďže kód už funguje v sandboxe |
-| N | verzie | `Version` 0.2.0 v `Directory.Build.props` nesúhlasí s add-inom 0.2.6 | Jeden zdroj verzie |
+| N | verzie | `Version` 0.2.0 v `Directory.Build.props` nesúhlasí s add-inom 0.2.11 | Jeden zdroj verzie |
+| N | `Log.cs` | `addin.log` je UTF-8 bez BOM, PowerShell 5.1 ukáže „–“ ako „?“ | Zapisovať s BOM |
 | N | `AddInProvider.cs` | Zastaraný `TODO(V21)` v komentári | Odstrániť |
 | N | `Readme.cs`, `Model.cs` | `Hardware modules` opakuje logiku `IsProduct` | Zjednotiť, ak pribudnú kategórie |
 | N | `MismatchCheck` | Premenovanie stanice zníži zhodu | Vážiť aj samotné objednávacie číslo |

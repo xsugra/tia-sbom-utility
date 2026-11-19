@@ -26,6 +26,7 @@ namespace TiaSbom.AddIn
                 form.AcceptButton = ok;
                 form.CancelButton = cancel;
 
+                Ui.BringToFront(form);
                 DialogResult answer = form.ShowDialog(owner);
                 Log.Write($"Token dialog -> {answer}");
                 return answer == DialogResult.OK ? box.Text.Trim() : null;

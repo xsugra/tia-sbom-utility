@@ -25,12 +25,27 @@ if ($packages.Count -eq 0) { throw 'No Add-In found. Run build.ps1 -Api Vnn -Add
 
 $target = Join-Path $Output "TiaSbom-$version"
 New-Item -ItemType Directory -Force (Join-Path $target 'addins') | Out-Null
-foreach ($file in 'install.ps1', 'install.cmd', 'tiasbom.env.example') {
+foreach ($file in 'install.ps1', 'install.cmd', 'check.cmd', 'tiasbom.env.example') {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $target -Force
 }
 foreach ($package in $packages) {
     Copy-Item -LiteralPath $package.FullName -Destination (Join-Path $target 'addins') -Force
     Write-Host ('{0}  {1:yyyy-MM-dd HH:mm}  {2}' -f $package.Name, $package.LastWriteTime, $package.FullName)
+}
+
+# tiasbom.exe for check.cmd. --check loads no Openness assembly, so a build of any API works on every PC.
+$cli = Get-ChildItem -Path (Join-Path $root 'src\TiaSbom.Cli\bin\V*\Release\net48\tiasbom.exe') -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($cli) {
+    $tools = Join-Path $target 'tools'
+    New-Item -ItemType Directory -Force $tools | Out-Null
+    Get-ChildItem -LiteralPath $cli.DirectoryName -File |
+        Where-Object { $_.Extension -in '.exe', '.dll', '.config' -and $_.Name -notlike 'Siemens.*' } |
+        Copy-Item -Destination $tools -Force
+    Write-Host "tools: $($cli.FullName)"
+}
+else {
+    Write-Warning 'No tiasbom.exe built, the package has no check.cmd tool. Run build.ps1 first.'
 }
 
 $zip = "$target.zip"

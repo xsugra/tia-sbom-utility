@@ -103,7 +103,11 @@ Prečo takto: VM vidí laptop cez Hyper-V Default Switch, ale port WSL je dostup
 
 ### Zmena adresy prepínača
 
-Default Switch môže po reštarte dostať novú adresu. VM potom hlási `An error occurred while sending the request` a `addin.log` obsahuje timeout na starú adresu.
+Default Switch môže po reštarte dostať novú adresu. VM potom hlási `TS-NET-04` (staršie verzie `An error occurred while sending the request`) a `addin.log` obsahuje timeout na starú adresu. Stalo sa to aj 2026-11-18.
+
+**Rýchla oprava:** dvakrát kliknite na `TiaSbom\tools\dev\fix-gitea-portproxy.cmd`. Vypýta si práva správcu, odstráni staré pravidlo pre port 3000, vytvorí nové na aktuálnej adrese prepínača, upraví pravidlo firewallu a overí spojenie. Nikdy nepočúva na `0.0.0.0`. Potom vo VM spustite `update-vm.cmd` alebo `install.cmd`, aby sa zmenila `BaseUrl`.
+
+Ručný postup:
 
 Na **laptope** zistite adresu:
 
