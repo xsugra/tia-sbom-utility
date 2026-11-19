@@ -110,7 +110,8 @@ Rozhodnutie je otvorené. Pri servisnom tokene nastavte práva súboru tak, aby 
 Vývoj ukázal, že meniaca sa adresa je najčastejšia príčina chýb (`TS-NET-04`). Na Hyper-V Default Switch sa adresa mení po reštarte laptopu.
 
 - Produkčná Gitea musí mať **stálu adresu**: DNS meno, napríklad `gitea.firma.local`, alebo pevnú IP. `portproxy` na serveri smeruje iba z jeho stálej adresy do WSL podľa `gitea-server`, nikdy nie na adresu, ktorá sa mení.
-- **HTTPS** s certifikátom, ktorému inžinierske PC dôverujú. Inak každý export skončí `TS-TLS-01`. Firemnú CA nasadí IT.
+- **HTTPS** s certifikátom, ktorému inžinierske PC dôverujú. Inak každý export skončí `TS-TLS-01`. Firemnú CA nasadí IT. Dovtedy inštalátor pridá koreňovú CA Caddy cez `GITEA_CA_CERT`, pozri [09-instalacia.md](09-instalacia.md#certifikát-servera).
+- Produkčná Gitea má `REQUIRE_SIGNIN_VIEW=true`, takže `/api/v1/version` bez tokenu vracia 403. `check.cmd` a inštalátor to od 0.2.12 berú ako dostupný server.
 - Firewall servera (Windows alebo ESET) povolí 443 zo siete inžinierov.
 - Po nasadení na každom PC `install.cmd` musí skončiť kódom 0, potom `check.cmd` u používateľa.
 

@@ -2,7 +2,7 @@
 
 **Posledná aktualizácia:** 2026-11-19
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
-**Verzia add-inu:** 0.2.11, overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia add-inu:** 0.2.12 v kóde, neoverená v TIA. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má 0.2.11, na GitHube od 2026-11-19
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
@@ -26,7 +26,7 @@ Automatické testy (overené 2026-11-19, podrobnosti v [12-automaticke-testy.md]
 
 | Sada | Výsledok |
 |---|---|
-| WSL net8.0 s vývojovou Gitea 28.2.0 | 84 z 84 |
+| WSL net8.0 s vývojovou Gitea 28.2.0 | 86 z 86 (2026-11-19, jeden beh 85 z 86, súbežný export je občas nestabilný) |
 | VM net48 bez Gitea | unit testy a hlášky OK |
 | Schéma CycloneDX 1.6 | výstup je platný |
 
@@ -39,6 +39,12 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 3. Chybové hlášky neodlišovali DNS, vypnutý server, timeout, certifikát, HTML namiesto API ani chýbajúce oprávnenia tokenu. Teraz kódy `TS-…` s krokom pre používateľa a cestou k logu, katalóg je v [11-chybove-hlasky.md](11-chybove-hlasky.md).
 4. Neplatná `BaseUrl`, `TimeoutSeconds=0` alebo poškodený `config.json` padali bez zrozumiteľnej hlášky.
 5. Inštalátor pre V21 dával add-in iba do profilu správcu. Teraz `ADDIN_SCOPE=corporate`.
+
+## 0.2.12, 2026-11-19, neoverené v TIA
+
+- Kontrola spojenia (`check.cmd`, inštalátor) berie 403 z produkčnej Gitea s `REQUIRE_SIGNIN_VIEW=true` ako dostupný server. Predtým by hlásila chybu.
+- `GITEA_CA_CERT` v `tiasbom.env`: inštalátor pridá koreňovú CA Caddy do dôveryhodných na PC, kým nie je certifikát firemnej CA. Overené iba suchým behom.
+- Add-in sa nemení správaním, verzia je zvýšená kvôli zmene `TiaSbom.Gitea`.
 
 ## Nové
 

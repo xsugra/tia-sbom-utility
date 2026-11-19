@@ -40,7 +40,7 @@ flowchart TD
 | `TS-NET-02` | … is reachable, but the Gitea service does not answer | Počítač je dostupný, ale na porte nič nepočúva | Kontaktovať administrátora | Gitea je zastavená: skontrolovať WSL a `docker compose ps`, pozri [03-gitea-server.md](03-gitea-server.md) |
 | `TS-NET-03` | Cannot connect to … | Iná chyba spojenia, napríklad proxy | Overiť sieť, skúsiť znova | Pozrieť `addin.log`, technický dôvod je tam |
 | `TS-NET-04` | … did not answer in time / cannot be reached | Firewall zahodil spojenie, server je preťažený alebo PC nie je vo firemnej sieti | Overiť sieť, skúsiť znova | Skontrolovať firewall servera (ESET, Windows) a `portproxy` |
-| `TS-TLS-01` | … does not trust the server certificate | HTTPS certifikát Gitea vydala autorita, ktorú PC nepozná | Kontaktovať administrátora | Nainštalovať firemnú CA do `Trusted Root Certification Authorities` počítača |
+| `TS-TLS-01` | … does not trust the server certificate | HTTPS certifikát Gitea vydala autorita, ktorú PC nepozná | Kontaktovať administrátora | Nainštalovať firemnú CA do `Trusted Root Certification Authorities` počítača. Pri `tls internal` nastaviť `GITEA_CA_CERT` a spustiť `install.cmd` |
 | `TS-API-01` | … does not answer like a Gitea server | Na adrese odpovedá iný web, napríklad IIS, prihlasovacia stránka alebo proxy | Kontaktovať administrátora | `GITEA_BASE_URL` musí byť koreň Gitea, bez `/api/v1` |
 
 ### Token a prihlásenie
