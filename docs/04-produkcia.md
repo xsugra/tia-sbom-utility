@@ -11,7 +11,7 @@ flowchart TB
             A1["TIA a add-in"]
             CFG["config.json od IT"]
         end
-        subgraph SRV["Linux server alebo VM"]
+        subgraph SRV["Windows server, WSL a Docker"]
             CAD["Caddy, HTTPS 443"]
             GIT["Gitea"]
             PG[("PostgreSQL")]
@@ -34,75 +34,40 @@ flowchart TB
 
 | Oblasť | Vývoj | Produkcia |
 |---|---|---|
-| Server | Laptop, WSL | Trvalý Linux server alebo VM, spúšťa sa so systémom |
-| Adresa | `https://localhost` | Interné DNS meno, napríklad `gitea.firma.local` |
+| Server | Laptop, WSL | Trvalý Windows stroj, WSL a Docker Engine, štart so systémom |
+| Adresa | `https://localhost` | Interné DNS meno, napríklad `gitea.firma.internal`. Nie `.local`, tú používa mDNS |
 | Certifikát | Caddy `tls internal` | Certifikát firemnej CA, dôveryhodný na počítačoch |
-| Port 3000 | Publikovaný pre VM | **Odstrániť** z `docker-compose.yml` |
-| Prístup | `portproxy` | Priamo cez HTTPS 443 |
-| `portproxy`, pravidlo firewallu | Existujú | Na serveri nie sú |
+| Port 3000 | Publikovaný pre VM | Nepublikovaný, `docker-compose.yml` v `gitea-server` |
+| Prístup | `portproxy` 3000, len prepínač | `portproxy` 443 a 80 na LAN adrese, firewall profil Domain |
 | Token | Osobný | Servisný účet v `config.json` alebo osobné tokeny |
 | Čítanie bez prihlásenia | Povolené | Rozhodnúť, odporúčané `REQUIRE_SIGNIN_VIEW=true` |
 | Zálohy | Žiadne | Denne, mimo server, s testom obnovy |
 | Add-in | Nepodpísaný, autor `YourCompany` | Podpísaný, skutočný autor |
 | Nasadenie | `install.ps1` | Inštalátor cez GPO, pozri [09-instalacia.md](09-instalacia.md) |
-| SSH port 2222 | Publikovaný | Vypnúť, ak ho nikto nepoužíva |
+| SSH port 2222 | Publikovaný | Vypnutý, `DISABLE_SSH=true` |
 
-## Čo server potrebuje
+## Server
 
-| Položka | Požiadavka |
+Konfigurácia servera a jeho dokumentácia sú v samostatnom súkromnom repozitári [xsugra/gitea-server](https://github.com/xsugra/gitea-server), lokálne v `C:\Code\gitea-server`:
+
+| Téma | Dokument v `gitea-server` |
 |---|---|
-| OS | Ubuntu LTS alebo iný podporovaný Linux |
-| Softvér | Docker Engine, Compose plugin |
-| Výkon | 2 vCPU, 4 GB RAM, 50 GB disk ako začiatok |
-| Sieť | Pevná adresa, DNS meno, 443 z firemnej siete |
-| Čas | NTP |
-| Správa | Vlastník, pravidelné aktualizácie OS a obrazov |
+| Požiadavky, nasadenie na Windows s WSL, sieť, certifikát, štart so systémom | [docs/nasadenie.md](https://github.com/xsugra/gitea-server/blob/main/docs/nasadenie.md) |
+| Správa, aktualizácia, záloha, obnova, monitoring | [docs/sprava.md](https://github.com/xsugra/gitea-server/blob/main/docs/sprava.md) |
+| Sieť a tajomstvá servera | [docs/bezpecnost.md](https://github.com/xsugra/gitea-server/blob/main/docs/bezpecnost.md) |
+| Chyby servera | [docs/riesenie-problemov.md](https://github.com/xsugra/gitea-server/blob/main/docs/riesenie-problemov.md) |
 
-Veľkosť je odhad. Jeden SBOM má rádovo desiatky kB, rozhoduje najmä počet verzií a história.
-
-## Postup nasadenia
+Poradie pre celý projekt:
 
 ```mermaid
 flowchart TD
-    A["Schváliť server a DNS s IT"] --> B["Nainštalovať Docker Engine"]
-    B --> C["Skopírovať compose a Caddyfile"]
-    C --> D["Vytvoriť .env s novými heslami"]
-    D --> E["Upraviť ROOT_URL, doménu, certifikát"]
-    E --> F["Odstrániť port 3000"]
-    F --> G["Spustiť stack a vytvoriť administrátora"]
-    G --> H["Založiť organizáciu sbom"]
-    H --> I["Nastaviť zálohy a otestovať obnovu"]
-    I --> J["Pilot s 2 až 3 počítačmi"]
-    J --> K["Nasadenie na všetky počítače"]
+    A["Dohodnúť DNS meno a pevnú IP s IT"] --> B["Nasadiť server podľa gitea-server"]
+    B --> C["Organizácia sbom, tokeny"]
+    C --> D["DNS záznam, certifikát firemnej CA"]
+    D --> E["Zálohy a test obnovy"]
+    E --> F["Pilot s 2 až 3 počítačmi"]
+    F --> G["Nasadenie na všetky počítače"]
 ```
-
-### Konfigurácia Gitea
-
-Príklad úpravy v `docker-compose.yml`:
-
-```yaml
-  gitea:
-    environment:
-      - GITEA__server__ROOT_URL=https://gitea.firma.local/
-      - GITEA__server__DOMAIN=gitea.firma.local
-      - GITEA__server__SSH_DOMAIN=gitea.firma.local
-      - GITEA__service__DISABLE_REGISTRATION=true
-      - GITEA__service__REQUIRE_SIGNIN_VIEW=true
-    ports: []
-```
-
-`Caddyfile` s certifikátom firemnej CA:
-
-```text
-gitea.firma.local {
-    tls /etc/caddy/certs/gitea.crt /etc/caddy/certs/gitea.key
-    reverse_proxy gitea:3000
-}
-```
-
-Certifikát a kľúč pripojte ako volume len na čítanie. Nepatria do Gitu.
-
-Pri `REQUIRE_SIGNIN_VIEW=true` musia mať čitatelia účet. Zvážte prihlasovanie cez firemné LDAP alebo AD.
 
 ### Konfigurácia počítačov
 
@@ -110,7 +75,7 @@ Pri `REQUIRE_SIGNIN_VIEW=true` musia mať čitatelia účet. Zvážte prihlasova
 
 ```json
 {
-  "BaseUrl": "https://gitea.firma.local",
+  "BaseUrl": "https://gitea.firma.internal",
   "Owner": "sbom",
   "Branch": "main",
   "PrivateRepos": false,
@@ -151,7 +116,7 @@ CRA vyžaduje uchovať dokumentáciu dlhodobo, počítajte s 10 rokmi.
 
 | Požiadavka | Riešenie |
 |---|---|
-| Denná záloha | `pg_dump` a archív volume, príklad v [03-gitea-server.md](03-gitea-server.md#záloha) |
+| Denná záloha | `pg_dump` a archív volume, [gitea-server: sprava.md](https://github.com/xsugra/gitea-server/blob/main/docs/sprava.md#záloha) |
 | Mimo server | Firemné úložisko so zálohovaním |
 | Test obnovy | Aspoň raz ročne, zapísať výsledok |
 | Ukončená zákazka | Repozitár v Gitea *Archive* |
@@ -161,10 +126,7 @@ Požadovanú dobu uchovania potvrďte s právnym oddelením.
 
 ## Monitoring
 
-- Dostupnosť `https://gitea.firma.local/api/healthz`.
-- Voľné miesto na disku.
-- Výsledok poslednej zálohy.
-- Platnosť certifikátu.
+Pozri [gitea-server: sprava.md](https://github.com/xsugra/gitea-server/blob/main/docs/sprava.md#monitoring).
 
 ## Akceptačný zoznam
 

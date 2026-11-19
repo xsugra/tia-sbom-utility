@@ -72,6 +72,7 @@ Dokumentácia je súčasť zmeny. Úloha nie je hotová, kým nesedí.
 | Build, VM, nasadenie add-inu | `docs/02-setup-vyvoj.md` |
 | Gitea, WSL, Docker, sieť | `docs/03-gitea-server.md`, prípadne `docs/05-bezpecnost.md` |
 | Plán produkcie | `docs/04-produkcia.md` |
+| Produkčný server: compose, Caddy, nasadenie, správa | repozitár `gitea-server` (`C:\Code\gitea-server`, remote `gitea-server`) |
 | Kód, štruktúra, známy problém | `docs/06-kod.md` |
 | Nová chyba a jej riešenie | `docs/08-riesenie-problemov.md` |
 | Inštalátor, `tiasbom.env`, hromadné nasadenie | `docs/09-instalacia.md` |
