@@ -119,7 +119,7 @@ flowchart TD
 - Členstvo v skupine `Siemens TIA Openness` dáva programom prístup k TIA. Pridávajte iba potrebných používateľov.
 - Okno brány Openness potvrdzujte iba pre program, ktorý poznáte.
 - Add-in má `TIA.ReadOnly`, projekt nemení.
-- Zdroj `.addin` kontrolujte. V produkcii používajte iba podpísané balíky z IT. Dnešný balík podpísaný nie je, TIA pri aktivácii ukazuje **Unsigned** a žiada všetky oprávnenia používateľa.
+- Zdroj `.addin` kontrolujte. Add-in sa nepodpisuje (rozhodnutie 2026-11-19), TIA pri aktivácii ukazuje **Unsigned** a žiada všetky oprávnenia používateľa. Balík preto nasadzuje iba IT z chráneného priečinka.
 - V21 beží add-in s `UnrestrictedAccess` a plnou dôverou, keďže schéma nemá oprávnenie pre DPAPI. Sprísnenie je otvorené.
 
 ## Práca s Claude

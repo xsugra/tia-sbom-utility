@@ -277,7 +277,7 @@ Priorita: **V** vysoká, **S** stredná, **N** nízka.
 | V | `SbomBuilder` | Chýba CPE | Mapovanie čísel na CPE |
 | V | `TiaSbom.AddIn` | Okná a sandbox V17: `TopMost` a Clipboard v novom okne hlásenia sú overené iba na V21 | Overiť na V17 a V19, Clipboard je ošetrený `try` |
 | S | CI | Testy sa spúšťajú ručne | GitHub Actions s `test.sh`, bez integračných testov |
-| S | `AddInPublisherConfig.*.xml` | Add-in nie je podpísaný, TIA pri aktivácii varuje **Unsigned** a po každej aktualizácii ho deaktivuje | Zistiť podpisovanie u Siemens a firemný certifikát |
+| S | `AddInPublisherConfig.*.xml` | Add-in nie je podpísaný, TIA pri aktivácii varuje **Unsigned** a po každej aktualizácii ho deaktivuje | Zámerne nepodpísaný, rozhodnutie 2026-11-19 |
 | V | GSD položky | `IV3-XXXX` nie je model, verzia je verzia popisu | Ručné doplnenie alebo mapovanie |
 | S | `App.FromFile` | Rozbalený archív ostáva v `%TEMP%\tiasbom` | Upratať po exporte |
 | S | `GiteaClient.GetVersionsAsync` | Každý export číta všetky verzie, pri stovkách verzií bude pomalý | Sledovať, prípadne čítať súhrn |
