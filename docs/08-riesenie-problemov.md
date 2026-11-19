@@ -91,6 +91,7 @@ Výpis položiek:
 | `404` pri organizácii | Organizácia neexistuje | Vytvoriť `sbom` |
 | Varovanie certifikátu | `tls internal` | Vo vývoji očakávané |
 | Docker kontajner nebeží | WSL sa vypol alebo zlyhal štart | `wsl -d Ubuntu-26.04`, potom `docker compose ps` |
+| Produkčný server: sieť, certifikát, `setup.sh`, štart | Server | [gitea-server: riesenie-problemov.md](https://github.com/xsugra/gitea-server/blob/main/docs/riesenie-problemov.md) |
 
 ## Hyper-V a prenos
 

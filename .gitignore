@@ -14,3 +14,7 @@ Siemens.*.dll
 
 # Local notes: machine names, addresses, accounts, test projects
 docs/local/
+
+# Certificates and private keys (server config lives in the gitea-server repository)
+*.key
+*.crt

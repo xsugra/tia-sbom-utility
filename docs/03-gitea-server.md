@@ -1,6 +1,6 @@
 # Gitea server
 
-Tento dokument opisuje **vývojovú inštanciu** na laptope. Produkčný server je v [04-produkcia.md](04-produkcia.md).
+Tento dokument opisuje **vývojovú inštanciu** na laptope. Produkčný server je v [04-produkcia.md](04-produkcia.md). Jeho konfigurácia je v súkromnom repozitári [xsugra/gitea-server](https://github.com/xsugra/gitea-server). Vývojový compose je iba vo WSL laptopu, v Gite nie je.
 
 ## Stack
 

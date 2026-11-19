@@ -68,6 +68,10 @@ V stĺpci adresy nesmie byť `0.0.0.0`. Docker publikuje porty na `0.0.0.0` iba 
 
 Pred zmenou režimu WSL na `mirrored` si overte dopad. Porty WSL by sa zobrazili na rozhraniach Windows.
 
+### Produkčný server
+
+Na produkčnom serveri je Gitea zámerne dostupná z firemnej siete, ale iba cez HTTPS 443. Sieť, `portproxy`, firewall a tajomstvá servera opisuje [gitea-server: bezpecnost.md](https://github.com/xsugra/gitea-server/blob/main/docs/bezpecnost.md).
+
 ## Tokeny
 
 ```mermaid

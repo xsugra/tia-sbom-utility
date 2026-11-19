@@ -1,6 +1,6 @@
 # Stav projektu
 
-**Posledná aktualizácia:** 2026-11-06
+**Posledná aktualizácia:** 2026-11-12
 **Fáza:** vývoj, testovanie ďalších verzií TIA
 **Verzia add-inu:** 0.2.10 lokálne, overená 0.2.7 na V19 a 0.2.6 na V17 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má overenú 0.2.6, `feat/multi-version-tia` testovanú 0.2.7
@@ -55,13 +55,14 @@ TIA V19 je overená add-inom 0.2.7 vrátane exportu do Gitea. Na V17 a V21 je ov
 | Gitea | beží vo WSL ako vývojová inštancia, nie ostrý server |
 | Zálohy Gitea | žiadne |
 | Pripojenie VM | HTTP cez `netsh portproxy`, len na Hyper-V prepínači |
+| Produkčný server | Beží na Windows serveri vo WSL, `https://<IP>` dostupné z firemnej siete (overené 2026-11-12 z iného PC). Autoštart cez úlohu S4U overený po reštarte. Certifikát zatiaľ `tls internal`, prehliadač hlási nedôveryhodný. Konfigurácia a postup v `xsugra/gitea-server`. DNS a certifikát firemnej CA chýbajú, export add-inu cez HTTPS neoverený |
 
 ## Ďalšie kroky
 
-1. Otestovať V18 a V20 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md).
+1. Otestovať V20 podľa [07-testovanie-verzii.md](07-testovanie-verzii.md).
 2. Dokončiť testy výnimiek v [07-testovanie-verzii.md](07-testovanie-verzii.md#testy-výnimiek).
 3. Overiť inštalátor a aktiváciu add-inu na skutočnom TIA podľa [09-instalacia.md](09-instalacia.md).
-4. Pripraviť produkčný server a zálohy podľa [04-produkcia.md](04-produkcia.md).
+4. Nasadiť produkčný server podľa [gitea-server: nasadenie.md](https://github.com/xsugra/gitea-server/blob/main/docs/nasadenie.md). Overiť `portproxy` 443, štart bez prihlásenia a export add-inu cez HTTPS, potom zálohy.
 
 ## História míľnikov
 

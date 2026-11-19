@@ -8,7 +8,7 @@ Cieľ: pred produkciou overiť každú používanú verziu na skutočnej inštal
 |---|---|---|---|---|---|
 | V16 | V14 SP1, V15, V15.1, V16 | `V16` | nie je | 4.6.2 | ☐ neotestované |
 | V17 | V15, V15.1, V16, V17 | `V17` | `V17` | 4.8 | ✅ overené |
-| V18 | V15.1 až V18 | `V17` | `V18`, pripravené | 4.8 | ☐ neotestované |
+| V18 | V15.1 až V18 | `V17` | `V18` | 4.8 | ✅ používateľ potvrdil, `V18.AddIn` má publisher |
 | V19 | V16 až V19 | `V17` | `V19` | 4.8 | ✅ overené |
 | V20 | V17 až V20 | `V17` | `V20`, pripravené | 4.8 | ☐ neotestované |
 | V21 | V21 | `V21` | `V21` | 4.8 | ✅ overené |
@@ -173,7 +173,7 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 
 ### TIA V18
 
-Neotestované. Kľúčové otázky: existuje `PublicAPI\V17.AddIn`? Dá sa balík aktivovať? Vyžaduje CLI licenčné ošetrenie `LicenseNotFoundException`, ktorá je k dispozícii od V18?
+0.2.10-rc1, 2026-11-06: build `-Api V18 -AddIn` prešiel, publisher je iba vo `V18.AddIn`, používateľ potvrdil funkčnosť. V Gitea sú tri exporty z V18. Testy výnimiek nie sú doložené logom.
 
 ### TIA V19
 
