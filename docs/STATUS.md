@@ -3,7 +3,7 @@
 **Posledná aktualizácia:** 2026-11-19
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
 **Verzia add-inu:** 0.2.11 vo vetve `claude/tia-sbom-automation-testing-d1becd`, overená na V21. Na V19 je overená 0.2.7, na V17 0.2.6 (`Product/Version` v `AddInPublisherConfig.*.xml`)
-**Verzia kódu:** `main` má 0.2.10-rc1, 0.2.11 zatiaľ nie je commitnutá
+**Verzia kódu:** `main` má 0.2.10-rc1, 0.2.11 je vo vetve `claude/tia-sbom-automation-testing-d1becd` na GitHube, nie v `main`
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
 
@@ -45,6 +45,7 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 - Testovací projekt `tests/TiaSbom.Tests`, `test.sh`, `test.ps1`.
 - `tools/vm-remote`: ovládanie VM s TIA z laptopu cez SSH, OCR a screenshoty.
 - `tools/redact-screenshot.ps1`, `tools/dev/fix-gitea-portproxy.cmd`.
+- Príručka pre kolegov ako Word a PDF v `docs/export/` (kapitoly 10, 11 a 09), generátor `tools/docs-export`. Markdown v `docs/` ostáva zdrojom. Skript `export-docs.ps1` zatiaľ visí vo Worde pri `SaveAs2`, príčina nezistená.
 - Dokumentácia pre kolegov: [10-pouzivatelska-prirucka.md](10-pouzivatelska-prirucka.md) so screenshotmi, [11-chybove-hlasky.md](11-chybove-hlasky.md), [12-automaticke-testy.md](12-automaticke-testy.md).
 
 ## Čo neprešlo testom
@@ -74,7 +75,7 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 |---|---|
 | GitHub `main` | overená 0.2.6 a dokumentácia |
 | lokálny `main` | 0.2.10-rc1 |
-| `claude/tia-sbom-automation-testing-d1becd` | 0.2.11, testy a dokumentácia, **necommitnuté**, čaká na revíziu |
+| `claude/tia-sbom-automation-testing-d1becd` | 0.2.11, testy, dokumentácia a príručka Word/PDF, pushnuté 2026-11-19 |
 
 ## Prostredie
 
@@ -87,7 +88,7 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 ## Ďalšie kroky
 
-1. Prejsť zmeny a rozhodnúť o commite vetvy `claude/tia-sbom-automation-testing-d1becd`.
+1. Prejsť vetvu `claude/tia-sbom-automation-testing-d1becd` a po overení na TIA ju zlúčiť do `main`.
 2. Overiť 0.2.11 na V17 a V19, hlavne okná v sandboxe.
 3. Rozhodnúť o servisnom tokene verzus osobných tokenoch a zistiť podpisovanie add-inu.
 4. Pripraviť produkčnú Gitea so stálou adresou, HTTPS a zálohou podľa [04-produkcia.md](04-produkcia.md).
