@@ -8,9 +8,9 @@ Cieľ: pred produkciou overiť každú používanú verziu na skutočnej inštal
 |---|---|---|---|---|---|
 | V16 | V14 SP1, V15, V15.1, V16 | `V16` | nie je | 4.6.2 | ☐ neotestované |
 | V17 | V15, V15.1, V16, V17 | `V17` | `V17` | 4.8 | ✅ overené |
-| V18 | V15.1 až V18 | `V17` | `V18` | 4.8 | ✅ používateľ potvrdil, `V18.AddIn` má publisher |
+| V18 | V15.1 až V18 | `V17` | `V18` | 4.8 | ✅ overené |
 | V19 | V16 až V19 | `V17` | `V19` | 4.8 | ✅ overené |
-| V20 | V17 až V20 | `V17` | `V20`, pripravené | 4.8 | ☐ neotestované |
+| V20 | V17 až V20 | `V17` | `V20` | 4.8 | ✅ overené |
 | V21 | V21 | `V21` | `V21` | 4.8 | ✅ overené |
 
 API tabuľka vychádza z dokumentácie Openness 2019 až 2023 a z priečinkov overených vo V17 a V21. **Kompatibilita add-inu medzi verziami v dostupnej dokumentácii nie je opísaná.** Add-in preto treba otestovať na každej verzii.
@@ -177,6 +177,8 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 
 ### TIA V17, overené
 
+0.2.11, 2026-11-19, `update-vm.cmd` z vetvy: inštalácia do `Portal V17\AddIns`, test spojenia OK, `check.cmd` `RESULT: OK`, Details 0.2.11, `fullTrust=False`. Dialóg čísla zákazky, okno „already stored“ a `TS-NET-04` (port 3999) sa ukázali **nad TIA** s ikonou **SBOM Export** na paneli úloh. Ctrl+C v okne hlásenia skopíruje text aj v sandboxe. Žiadna `SecurityException`. Test našiel chybu: `-Build` neinštaloval `check.cmd`, opravené. Neoverené: nový zápis verzie s 0.2.11, `TS-AUTH-01`.
+
 0.2.10-rc1, 2026-11-06: `install.ps1 -Build` OK, sandbox OK, uložený token sa prečítal, rovnaký obsah sa nezapíše, tri verzie jednej zákazky sú oddelené, jeden commit na export. Neoverené: neuložený projekt, `<názov>_2`, zlý token.
 
 
@@ -191,11 +193,15 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 
 ### TIA V18
 
-0.2.10-rc1, 2026-11-06: build `-Api V18 -AddIn` prešiel, publisher je iba vo `V18.AddIn`, používateľ potvrdil funkčnosť. V Gitea sú tri exporty z V18. Testy výnimiek nie sú doložené logom.
+0.2.11, 2026-11-19, `update-vm.cmd` z vetvy: inštalácia do `Portal V18\AddIns`, `check.cmd` a test spojenia OK, `fullTrust=False`. Podľa `addin.log` sa ukázal dialóg čísla zákazky, okno „already stored“ a `TS-NET-04` (port 3999), žiadna `SecurityException`. Neoverené: nový zápis verzie s 0.2.11, `TS-AUTH-01`. Publisher je iba vo `V18.AddIn`.
+
+0.2.10-rc1, 2026-11-06: build `-Api V18 -AddIn` prešiel, používateľ potvrdil funkčnosť, dve nové verzie zapísané.
 
 ### TIA V19
 
-Prebieha, začiatok 2026-11-06.
+0.2.11, 2026-11-19, `update-vm.cmd` z vetvy: inštalácia do `Portal V19\AddIns`, `check.cmd` aj test spojenia OK, Details 0.2.11, `fullTrust=False`. Dialóg čísla zákazky, okno „already stored“ a `TS-NET-04` (port 3999) sa ukázali **nad TIA** s ikonou **SBOM Export**, Ctrl+C skopíruje text. Žiadna `SecurityException`. Neoverené: nový zápis verzie s 0.2.11, `TS-AUTH-01`.
+
+Starší priebeh od 2026-11-06:
 
 | Položka | Výsledok |
 |---|---|
@@ -219,7 +225,7 @@ Pozornosť: `Device.UnpluggedItems` je od V19 dokumentované.
 
 ### TIA V20
 
-Neotestované. Pripravené `-Api V20` a `AddInPublisherConfig.V20.xml`, odvodené od V19. Schéma V20 ešte nebola skontrolovaná.
+0.2.11, 2026-11-19, `update-vm.cmd` z vetvy: inštalácia do `Portal V20\AddIns`, `check.cmd` a test spojenia OK, `fullTrust=False`. Podľa `addin.log` sa ukázal dialóg čísla zákazky, okno „already stored“ a `TS-NET-04` (port 3999), žiadna `SecurityException`. Neoverené: nový zápis verzie s 0.2.11, `TS-AUTH-01`. 0.2.10 z 2026-11-12 zapísala novú verziu. Prvý build 2026-11-06 zlyhal, opakovaný prešiel, príčina nie je zapísaná.
 
 ### TIA V16
 

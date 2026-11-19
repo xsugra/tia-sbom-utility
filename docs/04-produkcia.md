@@ -42,7 +42,7 @@ flowchart TB
 | Token | Osobný | Servisný účet v `config.json` alebo osobné tokeny |
 | Čítanie bez prihlásenia | Povolené | Rozhodnúť, odporúčané `REQUIRE_SIGNIN_VIEW=true` |
 | Zálohy | Žiadne | Denne, mimo server, s testom obnovy |
-| Add-in | Nepodpísaný, autor `YourCompany` | Podpísaný, skutočný autor |
+| Add-in | Nepodpísaný, autor `YourCompany` | Nepodpísaný (rozhodnutie 2026-11-19), skutočný autor |
 | Nasadenie | `install.ps1` | Inštalátor cez GPO, pozri [09-instalacia.md](09-instalacia.md) |
 | SSH port 2222 | Publikovaný | Vypnutý, `DISABLE_SSH=true` |
 
@@ -101,7 +101,7 @@ Rozhodnutie je otvorené. Pri servisnom tokene nastavte práva súboru tak, aby 
 2. Podpíšte balík firemným certifikátom. Publisher podporuje `Certificates` v konfigurácii. Postup je nutné overiť.
 3. Rozhodnite, ktoré buildy sa nasadzujú podľa [testov](07-testovanie-verzii.md).
 4. IT nasadí `.addin` inštalátorom s `ADDIN_SCOPE=corporate`. Na V21 je to `C:\ProgramData\Siemens\Automation\Portal V21\CorporateAddIns`, overené 2026-11-18. Pozri [09-instalacia.md](09-instalacia.md#nasadenie-na-10-až-20-počítačov).
-5. Počítajte s tým, že **každý používateľ add-in aktivuje sám, aj po každej aktualizácii**. Overené na V21 pri nepodpísanom balíku. Či podpis niečo zmení, treba zistiť.
+5. Počítajte s tým, že **každý používateľ add-in aktivuje sám, aj po každej aktualizácii**. Overené na V21. Add-in sa zámerne nepodpisuje, rozhodnutie 2026-11-19.
 6. Overte, či musia byť používatelia v skupine `Siemens TIA Openness`. Pri CLI je to povinné, pri add-ine to nie je overené.
 7. V21 má `UnrestrictedAccess`, overte akceptáciu bezpečnosťou.
 
@@ -146,7 +146,7 @@ Pozri [gitea-server: sprava.md](https://github.com/xsugra/gitea-server/blob/main
 - [ ] `ROOT_URL` zodpovedá skutočnej adrese a prihlásenie funguje.
 - [ ] Registrácia je vypnutá a heslá sú nové, nie z vývoja.
 - [ ] Záloha prebehne automaticky a obnova je otestovaná.
-- [ ] Add-in je podpísaný a nasadený cez IT.
+- [ ] Add-in je nasadený cez IT, zo známeho zdroja.
 - [ ] `install.cmd` skončí na každom PC kódom 0 a `check.cmd` u používateľa hlási `RESULT: OK`.
 - [ ] `./test.sh` prejde na vydávanej verzii, integračné testy proti vývojovej Gitea.
 - [ ] Bežný používateľ bez práv správcu dokončí export.
