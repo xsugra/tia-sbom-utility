@@ -18,6 +18,9 @@ Projekt je **vo vývoji**. Aktuálny stav je v [STATUS.md](STATUS.md).
 | testovať ďalšiu verziu TIA | [07-testovanie-verzii.md](07-testovanie-verzii.md) |
 | vyriešiť chybu | [08-riesenie-problemov.md](08-riesenie-problemov.md) |
 | nainštalovať utilitu na počítače | [09-instalacia.md](09-instalacia.md) |
+| **exportovať SBOM z TIA, aktivovať add-in** (pre inžinierov) | [10-pouzivatelska-prirucka.md](10-pouzivatelska-prirucka.md) |
+| zistiť, čo znamená chyba `TS-…` | [11-chybove-hlasky.md](11-chybove-hlasky.md) |
+| spustiť automatické testy, ovládať VM z laptopu | [12-automaticke-testy.md](12-automaticke-testy.md) |
 | poznať pravidlá pre Claude chaty | [../CLAUDE.md](../CLAUDE.md) |
 
 ## Celkový pohľad

@@ -62,6 +62,7 @@ namespace TiaSbom.AddIn
                 form.AcceptButton = ok;
                 form.CancelButton = cancel;
 
+                Ui.BringToFront(form);
                 DialogResult answer = form.ShowDialog(owner);
                 Log.Write($"Project key dialog -> {answer}");
                 return answer == DialogResult.OK ? ProjectKey.Normalize(combo.Text) : null;

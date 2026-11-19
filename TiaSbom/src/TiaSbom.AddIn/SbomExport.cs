@@ -132,22 +132,28 @@ namespace TiaSbom.AddIn
                 Log.Write("Gitea rejected the token: " + ex.Message);
                 if (tokenFromConfig)
                 {
-                    Report("Gitea rejected the company token of TiaSbom. The SBOM was not saved.\n\nContact the administrator.",
+                    Report(new ExportProblem("TS-AUTH-03",
+                        "Gitea rejected the company token of TiaSbom. The SBOM was not saved.",
+                        "Contact the administrator. The token in the TiaSbom configuration has to be replaced.").ToString(),
                         MessageBoxIcon.Warning);
                 }
                 else
                 {
                     TokenStore.Clear(); // next click asks for a new token
-                    Report("Gitea did not accept your token. The SBOM was not saved.\n\nExport again and enter a valid token.",
-                        MessageBoxIcon.Warning);
+                    Log.Write("Saved token removed, the next export asks for a new one.");
+                    Report(WithLog(ExportError.Describe(ex, giteaUrl)), MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
-                Log.Write("Export failed: " + ex);
-                Report(ExportError.Describe(ex, giteaUrl), MessageBoxIcon.Error);
+                ExportProblem problem = ExportError.Explain(ex, giteaUrl);
+                Log.Write($"Export failed, {problem.Code}: {ex}");
+                Report(WithLog(problem.ToString()), MessageBoxIcon.Error);
             }
         }
+
+        private static string WithLog(string text) =>
+            Log.FilePath == null ? text : text + "\nDetails: " + Log.FilePath;
 
         private static void Report(string text, MessageBoxIcon icon)
         {

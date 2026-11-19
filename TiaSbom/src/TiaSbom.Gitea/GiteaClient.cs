@@ -100,7 +100,7 @@ namespace TiaSbom.Gitea
             string listing = await GetContentsAsync(repo, "versions").ConfigureAwait(false);
             if (listing == null) return versions;
 
-            foreach (var entry in Core.Json.Parse(listing) as List<object> ?? new List<object>())
+            foreach (var entry in ParseAny(listing, "list versions in " + repo) as List<object> ?? new List<object>())
             {
                 var folder = entry as Dictionary<string, object>;
                 if (folder?.Get("type") as string != "dir" || !(folder.Get("name") is string name)) continue;
@@ -109,7 +109,7 @@ namespace TiaSbom.Gitea
                 if (text == null) continue;
 
                 Core.PreviousSbom version = ReadVersion(name, text)
-                    ?? throw new InvalidOperationException($"versions/{name}/sbom.json in {repo} is not a valid SBOM.");
+                    ?? throw new GiteaException(HttpStatusCode.OK, $"versions/{name}/sbom.json in {repo} is not a valid SBOM.", GiteaProblem.InvalidContent);
                 if (DateTimeOffset.TryParse(folder.Get("last_committer_date") as string, out DateTimeOffset storedAt))
                     version.StoredAt = storedAt;
                 versions.Add(version);
@@ -146,7 +146,9 @@ namespace TiaSbom.Gitea
 
         private static Core.PreviousSbom ReadVersion(string versionName, string sbomJson)
         {
-            var bom = Parse(sbomJson);
+            Dictionary<string, object> bom;
+            try { bom = Core.Json.Parse(sbomJson) as Dictionary<string, object>; }
+            catch (FormatException) { return null; }
             if (bom == null) return null;
 
             var metadata = bom.Get("metadata") as Dictionary<string, object>;
@@ -202,8 +204,16 @@ namespace TiaSbom.Gitea
             var names = new List<string>();
             for (int page = 1; ; page++)
             {
-                string text = await GetStringAsync($"orgs/{Esc(_settings.Owner)}/repos?limit=50&page={page}").ConfigureAwait(false);
-                var items = Core.Json.Parse(text) as List<object>;
+                string uri = $"orgs/{Esc(_settings.Owner)}/repos?limit=50&page={page}";
+                string text;
+                using (var response = await _http.GetAsync(uri).ConfigureAwait(false))
+                {
+                    if (response.StatusCode == HttpStatusCode.NotFound) throw MissingOrganization(response.StatusCode);
+                    if (!response.IsSuccessStatusCode) await ThrowAsync(response, "GET " + uri).ConfigureAwait(false);
+                    text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                }
+                var items = ParseAny(text, "GET " + uri) as List<object>
+                    ?? throw new GiteaException(HttpStatusCode.OK, $"Gitea: GET {uri} did not return a list.", GiteaProblem.NotGitea);
                 int count = 0;
                 foreach (var item in items ?? new List<object>())
                 {
@@ -224,7 +234,7 @@ namespace TiaSbom.Gitea
                 {
                     // A finished job is archived on purpose: a new version needs a human decision, not a failed write.
                     if (Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))?.Get("archived") is bool archived && archived)
-                        throw new InvalidOperationException($"Gitea project '{repo}' is archived and read-only. Ask an administrator to unarchive it.");
+                        throw new GiteaException((HttpStatusCode)423, $"Gitea project '{repo}' is archived and read-only.", GiteaProblem.Archived);
                     return;
                 }
                 if (response.StatusCode != HttpStatusCode.NotFound) await ThrowAsync(response, "read repository " + repo).ConfigureAwait(false);
@@ -240,6 +250,7 @@ namespace TiaSbom.Gitea
             };
             using (var response = await _http.PostAsync($"orgs/{Esc(_settings.Owner)}/repos", JsonContent(body)).ConfigureAwait(false))
             {
+                if (response.StatusCode == HttpStatusCode.NotFound) throw MissingOrganization(response.StatusCode);
                 // 409: created concurrently by someone else — fine.
                 if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.Conflict)
                     await ThrowAsync(response, "create repository " + repo).ConfigureAwait(false);
@@ -292,7 +303,56 @@ namespace TiaSbom.Gitea
             new StringContent(Core.Json.Serialize(body), Encoding.UTF8, "application/json");
 
         private static Dictionary<string, object> Parse(string json) =>
-            Core.Json.Parse(json) as Dictionary<string, object>;
+            ParseAny(json, "read the answer") as Dictionary<string, object>;
+
+        /// <summary>A wrong BaseUrl often reaches a web server that answers with HTML. That is not a damaged configuration file.</summary>
+        private static object ParseAny(string json, string action)
+        {
+            try { return Core.Json.Parse(json); }
+            catch (FormatException ex)
+            {
+                throw new GiteaException(HttpStatusCode.OK, $"Gitea: {action}: the answer is not Gitea JSON ({ex.Message})", GiteaProblem.NotGitea);
+            }
+        }
+
+        private GiteaException MissingOrganization(HttpStatusCode status) =>
+            new GiteaException(status, $"Gitea: organization '{_settings.Owner}' not found or not visible.", GiteaProblem.MissingOrganization);
+
+        /// <summary>
+        /// Public endpoint, asked without the token: Gitea 28 answers 401 even here when a wrong token is sent, and the
+        /// connection check must tell a network problem from a token problem.
+        /// </summary>
+        public async Task<string> GetServerVersionAsync()
+        {
+            string text;
+            using (var anonymous = new HttpClient { BaseAddress = _http.BaseAddress, Timeout = _http.Timeout })
+            using (var response = await anonymous.GetAsync("version").ConfigureAwait(false))
+            {
+                if (!response.IsSuccessStatusCode) await ThrowAsync(response, "GET version").ConfigureAwait(false);
+                text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            }
+            return Parse(text)?.Get("version") as string
+                ?? throw new GiteaException(HttpStatusCode.OK, "Gitea: /version did not return a version.", GiteaProblem.NotGitea);
+        }
+
+        /// <summary>Login name of the token owner. Fails with 401 for an invalid token.</summary>
+        public async Task<string> GetCurrentUserAsync()
+        {
+            string text = await GetStringAsync("user").ConfigureAwait(false);
+            return Parse(text)?.Get("login") as string
+                ?? throw new GiteaException(HttpStatusCode.OK, "Gitea: /user did not return a login.", GiteaProblem.NotGitea);
+        }
+
+        /// <summary>Whether the token owner may create repositories in the organization. Null when Gitea does not say.</summary>
+        public async Task<bool?> CanCreateRepositoryAsync(string login)
+        {
+            using (var response = await _http.GetAsync($"users/{Esc(login)}/orgs/{Esc(_settings.Owner)}/permissions").ConfigureAwait(false))
+            {
+                if (response.StatusCode == HttpStatusCode.NotFound) throw MissingOrganization(response.StatusCode);
+                if (!response.IsSuccessStatusCode) await ThrowAsync(response, "read organization permissions").ConfigureAwait(false);
+                return Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))?.Get("can_create_repository") as bool?;
+            }
+        }
 
         public void Dispose() => _http.Dispose();
     }
@@ -310,12 +370,34 @@ namespace TiaSbom.Gitea
             d.TryGetValue(key, out object value) ? value : null;
     }
 
+    public enum GiteaProblem
+    {
+        /// <summary>An HTTP status, see <see cref="GiteaException.StatusCode"/>.</summary>
+        Http,
+        /// <summary>The server answered, but not with Gitea API JSON: wrong BaseUrl, proxy, login page.</summary>
+        NotGitea,
+        MissingOrganization,
+        Archived,
+        /// <summary>A stored file cannot be read as an SBOM.</summary>
+        InvalidContent,
+    }
+
     public sealed class GiteaException : Exception
     {
         private const int UnprocessableEntity = 422;
 
         public HttpStatusCode StatusCode { get; }
-        public GiteaException(HttpStatusCode status, string message) : base(message) { StatusCode = status; }
+        public GiteaProblem Kind { get; }
+
+        public GiteaException(HttpStatusCode status, string message, GiteaProblem kind = GiteaProblem.Http) : base(message)
+        {
+            StatusCode = status;
+            Kind = kind;
+        }
+
+        /// <summary>Gitea: "token does not have at least one of required scope(s)". The token works, its permissions do not.</summary>
+        public bool IsMissingScope =>
+            StatusCode == HttpStatusCode.Forbidden && Message.IndexOf("required scope", StringComparison.OrdinalIgnoreCase) >= 0;
 
         /// <summary>
         /// 403 alone proves nothing about the token, Gitea also uses it for repository rules. A valid personal token
@@ -325,7 +407,11 @@ namespace TiaSbom.Gitea
             StatusCode == HttpStatusCode.Unauthorized ||
             (StatusCode == HttpStatusCode.Forbidden && Message.IndexOf("token", StringComparison.OrdinalIgnoreCase) >= 0);
 
-        /// <summary>Someone else changed the repository in between, a new attempt with fresh data can succeed.</summary>
-        public bool IsConflict => StatusCode == HttpStatusCode.Conflict || (int)StatusCode == UnprocessableEntity;
+        /// <summary>Someone else changed the repository in between, a new attempt with fresh data can succeed.
+        /// Gitea 28 answers a commit that lost the race with 403 "cannot lock ref ... is at X but expected Y" (seen in the
+        /// integration test with three parallel exports), not with 409.</summary>
+        public bool IsConflict =>
+            StatusCode == HttpStatusCode.Conflict || (int)StatusCode == UnprocessableEntity ||
+            (StatusCode == HttpStatusCode.Forbidden && Message.IndexOf("cannot lock ref", StringComparison.OrdinalIgnoreCase) >= 0);
     }
 }

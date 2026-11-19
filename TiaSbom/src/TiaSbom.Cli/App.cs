@@ -164,6 +164,7 @@ namespace TiaSbom.Cli
         private static void PrintUsage() => Console.WriteLine(
 @"tiasbom --project <file.ap21> | --archive <file.zap21> | --attach
         [--portal Vxx] [--out <sbom.json>] [--upload [--key <project key>] [--force]] [--config <config.json>] [--dump-hw]
-tiasbom --login");
+tiasbom --login
+tiasbom --check [--config <config.json>]      checks configuration, network, token and permissions, no TIA needed");
     }
 }
