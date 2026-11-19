@@ -82,13 +82,16 @@ Kým produkčná Gitea používa vlastnú CA Caddy (`tls internal`), PC jej cert
    ```
    `subject` a `issuer` musia byť rovnaké (`Caddy Local Authority … Root`).
 2. `gitea-root.crt` dajte vedľa `tiasbom.env` do chráneného priečinka. **Do Gitu nepatrí.** Súkromný kľúč `root.key` zo servera nikdy nekopírujte.
+   - Ak RDP na server neprenáša schránku ani disky, nahrajte súbor cez prehliadač na serveri do dočasného súkromného repozitára v Gitea, na PC ho stiahnite a repozitár zmažte.
+   - Text certifikátu neprepisujte ručne ani cez OCR. Prepísaná kópia mala chyby (`1` za `l`, `W` za `w`).
+   - Na každom PC overte odtlačok, kým súbor použijete: `(Get-PfxCertificate .\gitea-root.crt).Thumbprint` musí byť rovnaký ako `-fingerprint -sha1` z kroku 1, bez dvojbodiek.
 3. V `tiasbom.env` nastavte `GITEA_CA_CERT=gitea-root.crt` a spustite inštalátor.
 
 Inštalátor pridá iba tento jeden certifikát do *Trusted Root Certification Authorities* počítača a zapíše jeho odtlačok do `install.log` a `%ProgramData%\TiaSbom\gitea-ca.thumbprint`. Odmietne súbor so súkromným kľúčom, certifikát, ktorý nie je CA, aj medziľahlú CA. Pri zmene súboru starý certifikát nahradí, pri prázdnom `GITEA_CA_CERT` a pri `-Uninstall` ho odstráni. Certifikát, ktorému PC dôverovalo už predtým, nechá tak.
 
 Bezpečnosť: koreňovej CA Caddy potom PC dôverujú pre akúkoľvek adresu. Jej súkromný kľúč je na serveri, server preto chráňte. Keď IT dodá certifikát firemnej CA, nasaďte ho do Caddy, vyprázdnite `GITEA_CA_CERT` a spustite inštalátor znova.
 
-Overené 2026-11-19 suchým behom `-Check` s testovacím certifikátom. Skutočný zápis do úložiska certifikátov na PC zatiaľ nie je overený, ani správanie ESET pri kontrole HTTPS.
+Overené 2026-11-19 na VM s TIA V21 proti produkčnej Gitea, 0.2.12: inštalátor pridal koreňovú CA (`Trusted Gitea CA …`), test spojenia hlásil dostupný server so skrytou verziou, kód 0. `check.cmd` s osobným tokenom `RESULT: OK`. Neoverené: správanie ESET pri kontrole HTTPS na PC, kde ESET beží, a odstránenie CA pri `-Uninstall` na skutočnom PC.
 
 Priečinky add-inu:
 

@@ -145,6 +145,17 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 
 ### TIA V21, overené
 
+0.2.12, 2026-11-19, pilot proti **produkčnej Gitea** cez HTTPS (`tls internal`, `REQUIRE_SIGNIN_VIEW=true`). Build `-Api V21 -AddIn` z ZIP vetvy, `install.cmd -EnvFile` s `ADDIN_SCOPE=corporate` a `GITEA_CA_CERT`:
+
+| Položka | Výsledok |
+|---|---|
+| Inštalácia | `CorporateAddIns\TiaSbom.V21.addin`, `config.json` bez servisného tokenu, kód 0 |
+| `GITEA_CA_CERT` | koreňová CA Caddy pridaná, odtlačok v `install.log` |
+| Test spojenia | *Gitea reachable …, version hidden because sign-in is required* |
+| `tiasbom --login`, `check.cmd` | osobný token, všetky kroky OK, `RESULT: OK`, organizácia `sbom` prázdna |
+| TIA | add-in aktivovaný, v kontextovom menu projektu je |
+| Neoverené | export do produkčnej Gitea (zámerne zatiaľ nie), ESET na PC |
+
 0.2.11, 2026-11-18, automatizovaný test cez SSH a interaktívnu plochu VM. Postup je v [12-automaticke-testy.md](12-automaticke-testy.md), screenshoty v [príručke](10-pouzivatelska-prirucka.md).
 
 | Položka | Výsledok |
