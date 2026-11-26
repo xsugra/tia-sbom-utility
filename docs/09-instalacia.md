@@ -195,9 +195,10 @@ Pri takomto počte stačí ručný postup. Na jeden počítač trvá asi 5 minú
 ### Raz, administrátor
 
 1. Na build VM s každou verziou TIA spustite `build.ps1 -Api Vnn -AddIn` a `package.ps1`. Pozri [Balík pre nasadenie](#balík-pre-nasadenie).
-2. Vyplňte `tiasbom.env`: `GITEA_BASE_URL`, `GITEA_OWNER=sbom` a `ADDIN_SCOPE=corporate`.
-3. Balík s `tiasbom.env` dajte na zdieľaný priečinok, ktorý smú čítať iba správcovia. Alternatívou je USB kľúč.
+2. Vyplňte `tiasbom.env`: `GITEA_BASE_URL`, `GITEA_OWNER=sbom` a `ADDIN_SCOPE=corporate`. Kým server nemá certifikát firemnej CA, aj `GITEA_CA_CERT=gitea-root.crt` a súbor certifikátu vedľa `tiasbom.env`, pozri [Certifikát servera](#certifikát-servera).
+3. Balík s `tiasbom.env` dajte na zdieľaný priečinok, ktorý smú čítať iba správcovia. Alternatívou je USB kľúč. Nie na zdieľaný disk, ktorý čítajú všetci.
 4. V Gitea pridajte používateľov do organizácie `sbom` s právom zápisu. Pozri [03-gitea-server.md](03-gitea-server.md#organizácia-a-účty).
+5. Prvé 2 až 3 PC berte ako pilot: s rôznymi verziami TIA a aspoň jedno s ESET. 0.2.12 je overená na V21, na V17 až V20 bola overená 0.2.11.
 
 ### Na každom počítači
 
