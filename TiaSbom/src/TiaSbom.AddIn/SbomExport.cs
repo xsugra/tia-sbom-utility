@@ -73,6 +73,11 @@ namespace TiaSbom.AddIn
                     bool askedForKey = key == null;
                     List<string> repositories = gitea.ListReposAsync().GetAwaiter().GetResult();
                     Log.Write($"Repositories listed: {repositories.Count}");
+                    string login = gitea.TryGetCurrentUserAsync().GetAwaiter().GetResult();
+                    if (login != null) snapshot.ExportedBy = login;
+                    Log.Write(login != null
+                        ? $"Exported by Gitea account '{login}'"
+                        : $"Token has no read:user permission, exported by Windows user '{snapshot.ExportedBy}'");
                     if (askedForKey)
                     {
                         key = Ui.Run(owner => RepoPickerDialog.Ask(owner, snapshot.ProjectName,

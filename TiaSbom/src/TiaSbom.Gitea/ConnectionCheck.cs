@@ -88,7 +88,7 @@ namespace TiaSbom.Gitea
                     try { login = await gitea.GetCurrentUserAsync().ConfigureAwait(false); }
                     catch (GiteaException ex) when (ex.IsMissingScope)
                     {
-                        return "not checked, the token has no read:user permission (the export does not need it)";
+                        return "not checked, the token has no user: Read permission. The export works, but writes the Windows user instead of the Gitea account as 'By'";
                     }
                     bool? canCreate = await gitea.CanCreateRepositoryAsync(login).ConfigureAwait(false);
                     if (canCreate == false)

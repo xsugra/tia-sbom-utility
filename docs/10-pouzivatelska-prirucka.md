@@ -95,8 +95,15 @@ Token vytvoríte v Gitea: vpravo hore váš profil → **Settings → Applicatio
 |---|---|
 | organization | Read and Write |
 | repository | Read and Write |
+| user | Read |
 
 Token sa zobrazí iba raz. Skopírujte ho priamo do dialógu, nikam si ho neukladajte.
+
+`user: Read` je od verzie 0.2.14. Add-in podľa neho zapíše do stĺpca **By** meno vášho Gitea účtu. Bez neho export funguje, ale zapíše meno účtu Windows, na VM s TIA často `Admin`. Starší token vymeníte tak, že vytvoríte nový podľa tabuľky a uložíte ho v PowerShelli pod svojím účtom Windows:
+
+```powershell
+& C:\ProgramData\TiaSbom\tools\tiasbom.exe --login
+```
 
 ## 4. SBOM v Gitea
 
@@ -110,7 +117,7 @@ Každá zákazka má v organizácii `sbom` vlastný repozitár s názvom podľa 
 | `latest.json` (4) | Posledný export, nie úplný prehľad |
 | `README.md` (5) | Prehľad všetkých verzií, generuje ho add-in |
 
-README ukazuje všetky verzie, verziu TIA, počet modulov, čas exportu a autora (1):
+README ukazuje všetky verzie, verziu TIA, počet modulov, čas exportu a autora (1). Autor je Gitea účet z tokenu, pri tokene bez `user: Read` účet Windows:
 
 ![README repozitára](img/gitea-02-readme.png)
 
@@ -148,7 +155,7 @@ TiaSbom connection check, <používateľ>@<PC>
   OK      Token: personal token of this Windows user
   OK      Gitea server: Gitea 28.2.0
   OK      Token and organization: token accepted, sbom: 6 projects
-  OK      May create projects: not checked, the token has no read:user permission (the export does not need it)
+  OK      May create projects: yes (<gitea účet>)
 RESULT: OK, exports to Gitea will work.
 ```
 

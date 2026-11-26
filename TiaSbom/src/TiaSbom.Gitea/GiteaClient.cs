@@ -358,6 +358,17 @@ namespace TiaSbom.Gitea
                 ?? throw new GiteaException(HttpStatusCode.OK, "Gitea: /user did not return a login.", GiteaProblem.NotGitea);
         }
 
+        /// <summary>
+        /// Gitea account of the token owner for "By" in the SBOM and README. Several PCs (TIA VMs) share the Windows account
+        /// "Admin", so the Windows name does not tell who exported. Null for a token without read:user (created by the
+        /// guide before 0.2.14): the export does not need that permission, so it must not stop the export.
+        /// </summary>
+        public async Task<string> TryGetCurrentUserAsync()
+        {
+            try { return await GetCurrentUserAsync().ConfigureAwait(false); }
+            catch (GiteaException ex) when (ex.IsMissingScope) { return null; }
+        }
+
         /// <summary>Whether the token owner may create repositories in the organization. Null when Gitea does not say.</summary>
         public async Task<bool?> CanCreateRepositoryAsync(string login)
         {

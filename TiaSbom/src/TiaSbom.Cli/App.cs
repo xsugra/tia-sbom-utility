@@ -70,6 +70,13 @@ namespace TiaSbom.Cli
                 using (var gitea = new GiteaClient(settings, token))
                 {
                     var repositories = gitea.ListReposAsync().GetAwaiter().GetResult();
+                    string login = gitea.TryGetCurrentUserAsync().GetAwaiter().GetResult();
+                    if (login != null)
+                    {
+                        snapshot.ExportedBy = login;
+                        json = SbomBuilder.ToJson(SbomBuilder.Build(snapshot));
+                    }
+                    else Console.Error.WriteLine($"WARNING: the token has no read:user permission, 'By' is the Windows user '{snapshot.ExportedBy}'.");
                     var versions = gitea.GetVersionsAsync(key).GetAwaiter().GetResult();
                     var warnings = MismatchCheck.Evaluate(key, snapshot, versions, repositories);
                     foreach (string w in warnings) Console.Error.WriteLine("WARNING: " + w);

@@ -2,7 +2,7 @@
 
 **Posledná aktualizácia:** 2026-11-26
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
-**Verzia add-inu:** 0.2.13 v kóde: aktualizácia z Gitea, add-in bez zmeny správania, v TIA neoverená. 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, export do Gitea 2026-11-26), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia add-inu:** 0.2.14 v kóde: stĺpec By je Gitea účet, nie účet Windows, v TIA neoverená. 0.2.13: aktualizácia z Gitea, pilot na 2 PC kolegov s V21 prešiel 2026-11-26. 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, export do Gitea 2026-11-26), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má 0.2.12, tag `v0.2.12`, na GitHube od 2026-11-26
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
@@ -26,7 +26,7 @@ Automatické testy (overené 2026-11-19, podrobnosti v [12-automaticke-testy.md]
 
 | Sada | Výsledok |
 |---|---|
-| WSL net8.0 s vývojovou Gitea 28.2.0 | 87 z 87 (2026-11-26). Občas zlyhá súbežný export, je nestabilný |
+| WSL net8.0 s vývojovou Gitea 28.2.0 | 89 z 89 (2026-11-26). Občas zlyhá súbežný export, je nestabilný |
 | VM net48 bez Gitea | unit testy a hlášky OK |
 | Schéma CycloneDX 1.6 | výstup je platný |
 
@@ -40,11 +40,17 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 4. Neplatná `BaseUrl`, `TimeoutSeconds=0` alebo poškodený `config.json` padali bez zrozumiteľnej hlášky.
 5. Inštalátor pre V21 dával add-in iba do profilu správcu. Teraz `ADDIN_SCOPE=corporate`.
 
+## 0.2.14, 2026-11-26, autor exportu je Gitea účet
+
+- Hlásené z pilotu: VM s TIA majú všetky účet Windows `Admin`, preto stĺpec **By** v README a `tia:exportedBy` neurčili autora. Add-in aj CLI teraz zapíšu Gitea účet vlastníka tokenu.
+- Token potrebuje navyše oprávnenie **user: Read**. Starší token export nezastaví, zapíše sa účet Windows a `check.cmd` to povie. Kolegovia z pilotu si vytvoria nový token a uložia ho cez `tiasbom.exe --login`.
+- Overené: testy vo WSL proti vývojovej Gitea 89 z 89, aj s tokenom presne podľa starého návodu. **Neoverené:** build na VM, export z TIA, nasadenie cez `update.cmd`.
+
 ## 0.2.13, 2026-11-26, aktualizácia z Gitea
 
 - `C:\ProgramData\TiaSbom\update.cmd` nainštaluje najnovší release z Gitea (`GITEA_UPDATE_REPO`), iba ak SHA256 balíka sedí s popisom releasu. `-Check`, `-Version` na návrat, `-Force`. Postup v [09-instalacia.md](09-instalacia.md#aktualizácia-z-gitea), kódy `TS-UPD-01` až `06`.
 - Inštalátor ukladá nastavenia a certifikát do `%ProgramData%\TiaSbom\setup` (iba správcovia), token na aktualizácie šifrovaný DPAPI, verziu do `version.txt`.
-- Overené na VM s V21 proti vývojovej Gitea cez SSH tunel, do testovacích priečinkov: inštalácia, aktuálna verzia, `-Check`, `-Version`, chybové stavy. Pri zatvorenej TIA overená aj skutočná výmena z 0.2.12 na 0.2.13. V produkčnej Gitea je organizácia `tiasbom`, repozitár `release`, účet `tiasbom-update` a release v0.2.13. VM s V21 má 0.2.13 z USB, `update.cmd -Force` z produkcie prešiel, `check` OK. **Neoverené:** aktivácia 0.2.13 v TIA, PC kolegu.
+- Overené na VM s V21 proti vývojovej Gitea cez SSH tunel, do testovacích priečinkov: inštalácia, aktuálna verzia, `-Check`, `-Version`, chybové stavy. Pri zatvorenej TIA overená aj skutočná výmena z 0.2.12 na 0.2.13. V produkčnej Gitea je organizácia `tiasbom`, repozitár `release`, účet `tiasbom-update` a release v0.2.13. VM s V21 má 0.2.13 z USB, `update.cmd -Force` z produkcie prešiel, `check` OK. Pilot na 2 PC kolegov s V21: inštalácia z USB, add-in beží. **Neoverené:** `update.cmd` na PC kolegu pri ďalšom release, V17 až V20.
 - Add-in sa nemení, verzia je zvýšená, aby bol balík s `update.cmd` rozlíšiteľný.
 
 ## 0.2.12, 2026-11-19, overené na V21 proti produkčnej Gitea
@@ -103,11 +109,13 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 ## Ďalšie kroky
 
-1. 0.2.13: aktivovať v TIA na VM s V21 a export. Potom pilot na 2 až 3 PC kolegov s 0.2.13 z USB. Pri problémoch návrat na 0.2.12 z USB.
-2. TIA V21.1: najprv test existujúceho buildu V21, pozri [07-testovanie-verzii.md](07-testovanie-verzii.md).
-3. Zálohy produkčnej Gitea a test obnovy. Stála adresa a certifikát firemnej CA podľa [04-produkcia.md](04-produkcia.md#adresa-servera).
-4. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
-5. Zmeniť autora add-inu `YourCompany` na názov firmy.
+1. 0.2.14: build na VM s V21, export z TIA s novým tokenom (By = Gitea účet), potom release v `tiasbom/release` a `update.cmd` na PC z pilotu. Je to aj prvý test `update.cmd` u kolegov.
+2. 0.2.13: zlúčiť do `main`, tag `v0.2.13`. Ďalšie PC s V21 už z USB s 0.2.14. Po nasadení odstrániť token na aktualizácie z USB. Pri problémoch návrat na 0.2.12 z USB.
+3. HTTPS bez varovania na každom PC: Let's Encrypt cez DNS-01 (deSEC). Na laptope prešli testy DNS a dôvery, server mal pokazené DNS vo WSL, oprava pripravená, neoverená.
+4. TIA V21.1: najprv test existujúceho buildu V21, pozri [07-testovanie-verzii.md](07-testovanie-verzii.md).
+5. Zálohy produkčnej Gitea vrátane dát Caddy a test obnovy.
+6. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19. Servisný token by stĺpec By opäť zjednotil.
+7. Zmeniť autora add-inu `YourCompany` na názov firmy.
 
 ## História míľnikov
 
@@ -119,3 +127,4 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 | 2026-11-06 | Atomický zápis a súbežné verzie overené na V19, 0.2.10-rc1 |
 | 2026-11-18 | Automatické testy, chybové kódy, inštalácia do CorporateAddIns, end-to-end test na V21 cez SSH, 0.2.11 |
 | 2026-11-19 | 0.2.12: produkčná Gitea cez HTTPS s `GITEA_CA_CERT`, inštalácia a `check.cmd` z V21 overené |
+| 2026-11-26 | 0.2.12 export do produkcie, 0.2.13 s `update.cmd`, pilot na 2 PC kolegov |

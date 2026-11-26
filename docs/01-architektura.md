@@ -152,6 +152,8 @@ Po ukončení zákazky sa repozitár v Gitea archivuje, čím je len na čítani
 | komponenty `device` | položky zariadení s produktovou identitou | CPU, moduly, panely, GSD |
 | vnorené `firmware` | `FirmwareVersion` alebo `TypeIdentifier` | kľúč pre párovanie zraniteľností |
 
+`tia:exportedBy` a stĺpec **By** v README sú od 0.2.14 Gitea účet vlastníka tokenu (`/api/v1/user`, oprávnenie `user: Read`). VM s TIA majú často spoločný účet Windows `Admin`, ten autora neurčí. Token bez `user: Read` export nezastaví, zapíše sa účet Windows.
+
 Vlastnosti `tia:version` a `tia:opennessApi` sú zámerne oddelené. Build V17 môže bežať na TIA V20, verzia API teda nie je verzia TIA. Skutočnú verziu určuje prípona projektu, napríklad `.ap19`.
 
 Do SBOM nejdú položky bez produktovej identity: rozhrania, porty, moduly GSD bez objednávacieho čísla, stojan S7-1200 s číslom `Rack`.

@@ -247,6 +247,23 @@ namespace TiaSbom.Tests
             Assert.True(steps.All(s => s.Ok), string.Join("\n", steps.Select(s => $"{s.Name}: {s.Code} {s.Detail}")));
         }
 
+        /// <summary>"By" must be the Gitea account: TIA VMs share the Windows account "Admin".</summary>
+        [GiteaFact]
+        public async Task Current_user_is_the_gitea_account_of_the_token()
+        {
+            using (var gitea = new GiteaClient(GiteaTarget.Settings(), GiteaTarget.Token))
+                Assert.Equal(await gitea.GetCurrentUserAsync(), await gitea.TryGetCurrentUserAsync());
+        }
+
+        /// <summary>Tokens created before 0.2.14 have no read:user. The export must go on with the Windows name.</summary>
+        [GiteaFact]
+        public async Task Current_user_does_not_stop_the_export_without_read_user()
+        {
+            if (string.IsNullOrEmpty(GiteaTarget.DocumentedToken)) return;
+            using (var gitea = new GiteaClient(GiteaTarget.Settings(), GiteaTarget.DocumentedToken))
+                await gitea.TryGetCurrentUserAsync();
+        }
+
         [GiteaFact]
         public async Task Export_works_with_the_documented_token_scopes()
         {
