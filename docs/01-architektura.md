@@ -187,6 +187,7 @@ Starší projekt sa neotvára cez `OpenWithUpgrade`. Vznikla by povýšená kóp
 | Repozitáre viditeľné v rámci organizácie | Všetci majú vidieť všetky SBOM. Prístup v produkcii rieši [04-produkcia.md](04-produkcia.md) |
 | DPAPI cez `crypt32` | Šifrovaný token na používateľa, funguje v sandboxe |
 | Add-in sa nepodpisuje (2026-11-19) | Certifikát a jeho správa sa pre 10 až 20 PC neoplatia. Používateľ pri aktivácii potvrdí **Unsigned**, balík nasadzuje iba IT |
+| Aktualizácia z release v Gitea (2026-11-26, 0.2.13) | Žiadny ďalší server ani nástroj. Release v samostatnej organizácii `tiasbom`, token iba na čítanie, balík sa inštaluje iba pri zhode SHA256. Spúšťa správca `update.cmd`, nastavenia ostávajú na PC. Pri problémoch návrat na inštaláciu z USB |
 
 ## Licencie
 

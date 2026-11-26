@@ -10,7 +10,8 @@ Používateľský postup (aktivácia, export, hlášky) je v [10-pouzivatelska-p
 | `TiaSbom/deploy/install.cmd` | Spustenie bez ohľadu na Execution Policy |
 | `TiaSbom/deploy/check.cmd` | Kontrola spojenia pre používateľa, bez práv správcu |
 | `TiaSbom/deploy/tiasbom.env.example` | Šablóna nastavení |
-| `TiaSbom/deploy/package.ps1` | Zloženie balíka pre nasadenie |
+| `TiaSbom/deploy/package.ps1` | Zloženie balíka pre nasadenie a hash pre release |
+| `TiaSbom/deploy/update.cmd`, `update.ps1` | Aktualizácia z release v Gitea, nastavenia ostávajú na PC. Pozri [Aktualizácia z Gitea](#aktualizácia-z-gitea) |
 | `TiaSbom/deploy/update-vm.cmd` | Iba vývoj, rýchla aktualizácia VM |
 
 ## Stav overenia
@@ -68,8 +69,12 @@ Skopírujte `tiasbom.env.example` na `tiasbom.env` vedľa `install.ps1`. Súbor 
 | `TIA_ROOT` | nie | Koreň inštalácie TIA |
 | `ADDIN_DIR_Vnn` | nie | Priečinok add-inu pre verziu, má prednosť pred `ADDIN_SCOPE` |
 | `GITEA_CA_CERT` | nie | Koreňový certifikát Gitea vedľa `tiasbom.env`, iba kým server nemá certifikát firemnej CA. Pozri [Certifikát servera](#certifikát-servera) |
+| `GITEA_UPDATE_REPO` | nie | Repozitár s releasmi pre `update.cmd`, `vlastník/repozitár`. Pozri [Aktualizácia z Gitea](#aktualizácia-z-gitea) |
+| `GITEA_UPDATE_TOKEN` | nie | Token iba na čítanie toho repozitára. Na PC sa uloží šifrovaný, nikdy ako text |
 
 Zmena nastavenia: upravte `tiasbom.env` a znova spustite inštalátor.
+
+Inštalátor si nastavenia a certifikát uloží do `%ProgramData%\TiaSbom\setup`, kam majú prístup iba správcovia a SYSTEM. `update.cmd` ich odtiaľ číta, USB pri aktualizácii netreba. `GITEA_UPDATE_TOKEN` je tam iba v `update-token.bin` šifrovaný cez DPAPI pre počítač.
 
 ### Certifikát servera
 
@@ -257,9 +262,61 @@ Get-Content "$env:ProgramData\TiaSbom\install.log" -Tail 15
 ## Aktualizácia na novú verziu
 
 1. Zostavte a zbaľte novú verziu. `<Version>` musí byť vyššia vo všetkých `AddInPublisherConfig.*.xml`.
-2. Na každom PC zatvorte TIA a spustite `install.cmd`.
+2. Na každom PC zatvorte TIA a spustite `update.cmd` podľa [Aktualizácia z Gitea](#aktualizácia-z-gitea), alebo `install.cmd` z USB.
 3. Pri ďalšom štarte TIA ukáže *Corporate Add-Ins updated – Add-In replaced*.
 4. **Používateľ znova aktivuje add-in.** TIA ho pri výmene deaktivuje.
+
+## Aktualizácia z Gitea
+
+Od 0.2.13. Nový balík sa nahrá raz do Gitea ako release, na PC ho stiahne `C:\ProgramData\TiaSbom\update.cmd`. Nastavenia ostávajú na PC v `setup\`, nemenia sa.
+
+```mermaid
+flowchart LR
+    P["package.ps1 na VM"] --> R["Release vX.Y.Z v Gitea<br/>ZIP + riadok SHA256"]
+    R --> U["update.cmd na PC, ako správca"]
+    U --> H{"Hash sedí?"}
+    H -->|"nie"| X["TS-UPD-03, nič sa nemení"]
+    H -->|"áno"| I["install.ps1 z nového balíka<br/>s nastaveniami zo setup\"]
+```
+
+### Raz, na serveri
+
+Repozitár s releasmi nesmie byť v organizácii `sbom`. Do nej zapisujú všetci inžinieri, release by mohol vydať ktokoľvek z nich.
+
+1. Organizácia `tiasbom`, súkromná. Vlastník iba administrátor.
+2. V nej súkromný repozitár `release`.
+3. Účet `tiasbom-update`, bez iných práv. V repozitári `release` ho pridajte ako spolupracovníka s právom **Read**.
+4. Pod účtom `tiasbom-update` token s oprávnením **repository: Read**, nič viac.
+5. Do `tiasbom.env` na USB: `GITEA_UPDATE_REPO=tiasbom/release` a `GITEA_UPDATE_TOKEN=…`. Na PC, ktoré už majú 0.2.12, raz spustite `install.cmd` z USB s balíkom 0.2.13.
+
+Token na aktualizácie vidí iba release, nie SBOM. Na PC je v `setup\update-token.bin` šifrovaný pre počítač, čítať ho môžu iba správcovia.
+
+### Pri každej novej verzii
+
+1. Na VM `build.ps1 -Api V21 -AddIn` a `deploy\package.ps1`. Na konci vypíše `SHA256: …`.
+2. V Gitea: `tiasbom/release` → **Releases → New Release**, tag `vX.Y.Z` podľa `<Version>`, priložiť `TiaSbom-X.Y.Z.zip`, do popisu vložiť riadok `SHA256: …`.
+3. Na PC, TIA zatvorená, PowerShell ako správca:
+
+   ```powershell
+   & C:\ProgramData\TiaSbom\update.cmd; "EXIT CODE: $LASTEXITCODE"
+   ```
+
+4. Každý používateľ add-in v TIA znova aktivuje.
+
+| Príkaz | Účel |
+|---|---|
+| `update.cmd` | Nainštaluje najnovší release, ak je novší ako `version.txt` |
+| `update.cmd -Check` | Stiahne a overí balík, ukáže plán inštalátora, nič nezmení |
+| `update.cmd -Version 0.2.13` | Presne táto verzia, aj staršia. Návrat po zlej verzii |
+| `update.cmd -Force` | Nainštaluje najnovší release aj pri rovnakej verzii |
+
+Návrat na 0.2.12, ktorá `update.cmd` nemá: `install.cmd` z jej balíka. `setup\` a `update.cmd` ostanú na PC a neškodia, odstráni ich `install.cmd -Uninstall` z 0.2.13.
+
+Chyby `TS-UPD-…` sú v [11-chybove-hlasky.md](11-chybove-hlasky.md#kódy-aktualizácie).
+
+Bezpečnosť: `update.cmd` nainštaluje iba balík, ktorého SHA256 sedí s popisom releasu. To chráni pred poškodeným alebo omylom vymeneným súborom. Nechráni pred útočníkom so zápisom do `tiasbom/release`, ten zmení aj popis. Preto do tejto organizácie smie zapisovať iba administrátor.
+
+Overené 2026-11-26 na VM s TIA V21 proti vývojovej Gitea 28.2.0, súkromný repozitár, token iba na čítanie: inštalácia s `setup\` a šifrovaným tokenom, „Already up to date“, `-Check -Force`, `-Version`, `TS-UPD-02`, `TS-UPD-03` (zlý a chýbajúci hash), `TS-UPD-04`, `TS-UPD-06`, `TS-UPD-01`. Skutočná výmena add-inu pri zatvorenej TIA z 0.2.12 na 0.2.13. V produkčnej Gitea s `tiasbom/release` a účtom `tiasbom-update` overené `update.cmd` a `update.cmd -Force`.
 
 ## Obmedzenia
 
@@ -277,3 +334,4 @@ Get-Content "$env:ProgramData\TiaSbom\install.log" -Tail 15
 - `OPENNESS_MEMBERS` dáva členom prístup k TIA cez Openness, uvádzajte len nutné skupiny.
 - Produkčný `GITEA_BASE_URL` používa `https://`, inštalátor pri HTTP varuje. Firemná certifikačná autorita musí byť na PC dôveryhodná, inak `TS-TLS-01`. Dočasne pomôže `GITEA_CA_CERT`.
 - `GITEA_CA_CERT` mení dôveryhodné certifikáty počítača. Nastavuje ho iba administrátor v chránenom `tiasbom.env`.
+- `update.cmd` spúšťa kód z Gitea s právami správcu. Release smie vydať iba administrátor, token na aktualizácie je iba na čítanie a vidí iba repozitár s releasmi.

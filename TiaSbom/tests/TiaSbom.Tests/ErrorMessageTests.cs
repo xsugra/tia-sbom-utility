@@ -163,5 +163,19 @@ namespace TiaSbom.Tests
                 .Select(m => m.Groups[1].Value).Distinct();
             foreach (string code in codes) Assert.Contains(code, catalog);
         }
+
+        [Fact]
+        public void Catalog_lists_every_code_of_the_installer_and_the_update()
+        {
+            string catalog = File.ReadAllText(Repo.File_("..", "docs", "11-chybove-hlasky.md"));
+            foreach (string script in new[] { "install.ps1", "update.ps1" })
+            {
+                string source = File.ReadAllText(Repo.File_("deploy", script));
+                var codes = System.Text.RegularExpressions.Regex.Matches(source, @"TS-[A-Z]+-\d\d").Cast<System.Text.RegularExpressions.Match>()
+                    .Select(m => m.Value).Distinct().ToList();
+                Assert.NotEmpty(codes);
+                foreach (string code in codes) Assert.True(catalog.Contains(code), $"{code} from {script} is missing in docs/11-chybove-hlasky.md");
+            }
+        }
     }
 }

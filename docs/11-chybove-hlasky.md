@@ -94,6 +94,29 @@ Tieto hlášky nie sú chyby, export zámerne zastaví a povie prečo:
 | 2 | TIA je na PC, ale pre jej verziu nie je balík |
 | 3 | Nainštalované, ale Gitea z tohto PC nie je dostupná. Riadok `WARN Connection test TS-…` uvádza kód z tabuliek vyššie. |
 
+## Kódy aktualizácie
+
+`C:\ProgramData\TiaSbom\update.cmd` stiahne nový release z Gitea a spustí jeho inštalátor. Riadky začínajú `Update:` v `install.log`. Postup je v [09-instalacia.md](09-instalacia.md#aktualizácia-z-gitea).
+
+| Kód | Príčina | Administrátor |
+|---|---|---|
+| `TS-UPD-01` | Na PC chýbajú uložené nastavenia, `GITEA_UPDATE_REPO` alebo token na aktualizácie | Doplniť `GITEA_UPDATE_REPO` a `GITEA_UPDATE_TOKEN` do `tiasbom.env` na USB a raz spustiť `install.cmd` |
+| `TS-UPD-02` | Release neexistuje, repozitár nie je viditeľný, tag nie je verzia `vX.Y.Z`, alebo release nemá práve jednu prílohu `TiaSbom-x.y.z.zip` | Skontrolovať release v Gitea a `GITEA_UPDATE_REPO` |
+| `TS-UPD-03` | V popise releasu chýba riadok `SHA256: …` alebo stiahnutý balík má iný hash. Nič sa nenainštalovalo. | Riadok z výstupu `package.ps1` vložiť do popisu releasu. Pri inom hashi nahrať balík znova. Ak sa hash mení bez dôvodu, niekto mohol balík vymeniť. |
+| `TS-UPD-04` | Beží TIA Portal, nič sa nezmenilo | Zatvoriť TIA, spustiť znova |
+| `TS-UPD-05` | ZIP v release nie je balík z `package.ps1`, chýba v ňom `install.ps1` | Nahrať ZIP z `package.ps1` |
+| `TS-UPD-06` | Gitea odmietla token na aktualizácie (401 alebo 403) | Nový token účtu na aktualizácie, do `tiasbom.env` na USB, raz `install.cmd` |
+| `TS-SEC-01` | `update.cmd` nebeží ako správca | Pravý klik → *Run as administrator* |
+
+Sieťové chyby majú rovnaké kódy ako export, napríklad `TS-NET-04` alebo `TS-TLS-01`.
+
+| Návratový kód `update.cmd` | Význam |
+|---|---|
+| 0 | Aktualizované, alebo už je najnovšia verzia |
+| 1 | Zlyhalo, kód `TS-…` je v riadku `ERROR` |
+| 2, 3 | Ako pri `install.cmd` |
+| 4 | Beží TIA Portal (`TS-UPD-04`) |
+
 ## Kde je log
 
 | Súbor | Obsah |

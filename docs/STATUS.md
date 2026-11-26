@@ -2,7 +2,7 @@
 
 **Posledná aktualizácia:** 2026-11-26
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
-**Verzia add-inu:** 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, export do Gitea 2026-11-26), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia add-inu:** 0.2.13 v kóde: aktualizácia z Gitea, add-in bez zmeny správania, v TIA neoverená. 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, export do Gitea 2026-11-26), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má 0.2.12, tag `v0.2.12`, na GitHube od 2026-11-26
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
@@ -26,7 +26,7 @@ Automatické testy (overené 2026-11-19, podrobnosti v [12-automaticke-testy.md]
 
 | Sada | Výsledok |
 |---|---|
-| WSL net8.0 s vývojovou Gitea 28.2.0 | 86 z 86 (2026-11-19, jeden beh 85 z 86, súbežný export je občas nestabilný) |
+| WSL net8.0 s vývojovou Gitea 28.2.0 | 87 z 87 (2026-11-26). Občas zlyhá súbežný export, je nestabilný |
 | VM net48 bez Gitea | unit testy a hlášky OK |
 | Schéma CycloneDX 1.6 | výstup je platný |
 
@@ -39,6 +39,13 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 3. Chybové hlášky neodlišovali DNS, vypnutý server, timeout, certifikát, HTML namiesto API ani chýbajúce oprávnenia tokenu. Teraz kódy `TS-…` s krokom pre používateľa a cestou k logu, katalóg je v [11-chybove-hlasky.md](11-chybove-hlasky.md).
 4. Neplatná `BaseUrl`, `TimeoutSeconds=0` alebo poškodený `config.json` padali bez zrozumiteľnej hlášky.
 5. Inštalátor pre V21 dával add-in iba do profilu správcu. Teraz `ADDIN_SCOPE=corporate`.
+
+## 0.2.13, 2026-11-26, aktualizácia z Gitea
+
+- `C:\ProgramData\TiaSbom\update.cmd` nainštaluje najnovší release z Gitea (`GITEA_UPDATE_REPO`), iba ak SHA256 balíka sedí s popisom releasu. `-Check`, `-Version` na návrat, `-Force`. Postup v [09-instalacia.md](09-instalacia.md#aktualizácia-z-gitea), kódy `TS-UPD-01` až `06`.
+- Inštalátor ukladá nastavenia a certifikát do `%ProgramData%\TiaSbom\setup` (iba správcovia), token na aktualizácie šifrovaný DPAPI, verziu do `version.txt`.
+- Overené na VM s V21 proti vývojovej Gitea cez SSH tunel, do testovacích priečinkov: inštalácia, aktuálna verzia, `-Check`, `-Version`, chybové stavy. Pri zatvorenej TIA overená aj skutočná výmena z 0.2.12 na 0.2.13. V produkčnej Gitea je organizácia `tiasbom`, repozitár `release`, účet `tiasbom-update` a release v0.2.13. VM s V21 má 0.2.13 z USB, `update.cmd -Force` z produkcie prešiel, `check` OK. **Neoverené:** aktivácia 0.2.13 v TIA, PC kolegu.
+- Add-in sa nemení, verzia je zvýšená, aby bol balík s `update.cmd` rozlíšiteľný.
 
 ## 0.2.12, 2026-11-19, overené na V21 proti produkčnej Gitea
 
@@ -96,11 +103,11 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 ## Ďalšie kroky
 
-1. Prvý export z TIA V21 do produkčnej Gitea: overený 2026-11-26. Ďalej príprava na TIA V21.1, pozri [07-testovanie-verzii.md](07-testovanie-verzii.md).
-2. Zálohy produkčnej Gitea a test obnovy. Stála adresa a certifikát firemnej CA podľa [04-produkcia.md](04-produkcia.md#adresa-servera).
-3. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
-4. Zmeniť autora add-inu `YourCompany` na názov firmy.
-5. Pilot na 2 až 3 PC podľa [09-instalacia.md](09-instalacia.md#nasadenie-na-10-až-20-počítačov).
+1. 0.2.13: aktivovať v TIA na VM s V21 a export. Potom pilot na 2 až 3 PC kolegov s 0.2.13 z USB. Pri problémoch návrat na 0.2.12 z USB.
+2. TIA V21.1: najprv test existujúceho buildu V21, pozri [07-testovanie-verzii.md](07-testovanie-verzii.md).
+3. Zálohy produkčnej Gitea a test obnovy. Stála adresa a certifikát firemnej CA podľa [04-produkcia.md](04-produkcia.md#adresa-servera).
+4. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
+5. Zmeniť autora add-inu `YourCompany` na názov firmy.
 
 ## História míľnikov
 

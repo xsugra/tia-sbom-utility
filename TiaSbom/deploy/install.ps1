@@ -8,6 +8,8 @@
 
   Settings come from tiasbom.env next to this script. Run as administrator, or as SYSTEM from a GPO startup script.
   GITEA_CA_CERT adds one root certificate to the trusted roots of the PC; -Uninstall removes it again.
+  The settings and the certificate are kept in %ProgramData%\TiaSbom\setup (administrators only), so update.cmd can
+  later install a new release from Gitea without the USB stick. GITEA_UPDATE_TOKEN is stored there encrypted, never as text.
 
   Exit codes: 0 done, 1 failed, 2 TIA found but no package for any of its versions,
               3 installed, but Gitea is not reachable from this PC (see install.log for the TS- code).
@@ -30,7 +32,8 @@ if (-not $EnvFile) { $EnvFile = Join-Path $PSScriptRoot 'tiasbom.env' }
 # TIA versions with their own Add-In build. Others are reported, never served with a package of another version.
 $BuildableVersions = 17, 18, 19, 20, 21
 $KnownKeys = 'TIA_ROOT', 'GITEA_BASE_URL', 'GITEA_OWNER', 'GITEA_BRANCH', 'GITEA_PRIVATE_REPOS',
-             'GITEA_TIMEOUT_SECONDS', 'GITEA_TOKEN', 'OPENNESS_MEMBERS', 'ADDIN_SCOPE', 'GITEA_CA_CERT'
+             'GITEA_TIMEOUT_SECONDS', 'GITEA_TOKEN', 'OPENNESS_MEMBERS', 'ADDIN_SCOPE', 'GITEA_CA_CERT',
+             'GITEA_UPDATE_REPO', 'GITEA_UPDATE_TOKEN'
 $OpennessGroup = 'Siemens TIA Openness'
 $script:Warnings = 0
 $script:ConnectionFailed = $false
@@ -334,9 +337,74 @@ function Install-Tools {
     if ($Check) { Write-Step "Would copy tools to $target"; return }
     New-Item -ItemType Directory -Force $target | Out-Null
     $files | Copy-Item -Destination $target -Force
-    $launcher = Join-Path $PSScriptRoot 'check.cmd'
-    if (Test-Path -LiteralPath $launcher) { Copy-Item -LiteralPath $launcher -Destination $ConfigDir -Force }
+    foreach ($script in 'check.cmd', 'update.cmd', 'update.ps1') {
+        $launcher = Join-Path $PSScriptRoot $script
+        if (Test-Path -LiteralPath $launcher) { Copy-Item -LiteralPath $launcher -Destination $ConfigDir -Force }
+    }
     Write-Step "Tools: $target, users run $(Join-Path $ConfigDir 'check.cmd')"
+}
+
+# Version of this package: VERSION from package.ps1, or the publisher configuration of a development checkout.
+function Get-PackageVersion {
+    $file = Join-Path $PSScriptRoot 'VERSION'
+    if (Test-Path -LiteralPath $file) { return (Get-Content -LiteralPath $file -Raw).Trim() }
+    $config = Get-ChildItem -Path (Join-Path $PSScriptRoot '..\src\TiaSbom.AddIn\AddInPublisherConfig.*.xml') -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($config) { return ([xml](Get-Content -LiteralPath $config.FullName -Raw)).PackageConfiguration.Product.Version }
+    return $null
+}
+
+# update.cmd needs the settings after the USB stick is gone. They stay in setup\, which only administrators and SYSTEM
+# may open: tiasbom.env may hold a service token, and DPAPI LocalMachine lets any local process decrypt update-token.bin.
+$SetupDir = Join-Path $ConfigDir 'setup'
+$UpdateTokenFile = 'update-token.bin'
+
+function Set-AdminOnlyAcl([string]$Directory) {
+    $acl = New-Object System.Security.AccessControl.DirectorySecurity
+    $acl.SetAccessRuleProtection($true, $false)
+    foreach ($sidText in 'S-1-5-18', 'S-1-5-32-544') {   # SYSTEM, Administrators
+        $sid = New-Object System.Security.Principal.SecurityIdentifier($sidText)
+        $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+            $sid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')))
+    }
+    Set-Acl -LiteralPath $Directory -AclObject $acl
+}
+
+function Save-Setup([hashtable]$Settings) {
+    $envTarget = Join-Path $SetupDir 'tiasbom.env'
+    # update.cmd runs this installer with the kept file itself; then only the token and the certificate may change.
+    $fromSetup = [IO.Path]::GetFullPath($EnvFile) -eq [IO.Path]::GetFullPath($envTarget)
+    $hasToken = [bool]$Settings['GITEA_UPDATE_TOKEN']
+    if ($Check) { Write-Step "Would keep the settings in $SetupDir for update.cmd$(if ($hasToken) { ', update token encrypted' })"; return }
+
+    New-Item -ItemType Directory -Force $SetupDir | Out-Null
+    Set-AdminOnlyAcl $SetupDir
+    $kept = @{}
+    foreach ($key in $Settings.Keys) { $kept[$key] = $Settings[$key] }
+
+    if ($Settings['GITEA_CA_CERT']) {
+        $name = $Settings['GITEA_CA_CERT']
+        $source = if ([IO.Path]::IsPathRooted($name)) { $name } else { Join-Path (Split-Path -Parent $EnvFile) $name }
+        $target = Join-Path $SetupDir (Split-Path -Leaf $source)
+        if ([IO.Path]::GetFullPath($source) -ne [IO.Path]::GetFullPath($target)) { Copy-Item -LiteralPath $source -Destination $target -Force }
+        $kept['GITEA_CA_CERT'] = Split-Path -Leaf $source
+    }
+    if ($hasToken) {
+        Add-Type -AssemblyName System.Security
+        $bytes = [Text.Encoding]::UTF8.GetBytes($Settings['GITEA_UPDATE_TOKEN'])
+        $sealed = [Security.Cryptography.ProtectedData]::Protect($bytes, $null, [Security.Cryptography.DataProtectionScope]::LocalMachine)
+        [IO.File]::WriteAllBytes((Join-Path $SetupDir $UpdateTokenFile), $sealed)
+    }
+    $kept.Remove('GITEA_UPDATE_TOKEN')   # never as text, not even an empty line
+    if (-not $fromSetup) {
+        $lines = @('# Kept by install.ps1 for update.cmd. Change the settings on the USB stick and run install.cmd again.')
+        $lines += @($kept.Keys | Sort-Object | ForEach-Object { "$_=$($kept[$_])" })
+        Set-Content -LiteralPath $envTarget -Value $lines -Encoding UTF8
+    }
+    $tokenState = if ($hasToken) { 'update token stored encrypted' }
+        elseif (Test-Path -LiteralPath (Join-Path $SetupDir $UpdateTokenFile)) { 'update token kept' }
+        else { 'no update token' }
+    Write-Step "Settings kept in $SetupDir for update.cmd, $tokenState"
 }
 
 function Add-OpennessMembers([string]$Members) {
@@ -366,7 +434,7 @@ function Uninstall-All([hashtable]$Settings, [int[]]$Versions, [string]$TiaRoot)
             Write-Step "Removed $($file.FullName)"
         }
     }
-    foreach ($item in (Join-Path $ConfigDir 'tools'), (Join-Path $ConfigDir 'check.cmd')) {
+    foreach ($item in @('tools', 'check.cmd', 'update.cmd', 'update.ps1', 'version.txt', 'setup' | ForEach-Object { Join-Path $ConfigDir $_ })) {
         if (-not (Test-Path -LiteralPath $item)) { continue }
         if ($Check) { Write-Step "Would remove $item" }
         else { Remove-Item -LiteralPath $item -Recurse -Force; Write-Step "Removed $item" }
@@ -386,7 +454,8 @@ try {
     $settings = Read-EnvFile $EnvFile
     $tiaRoot = if ($settings['TIA_ROOT']) { $settings['TIA_ROOT'] } else { 'C:\Program Files\Siemens\Automation' }
     $versions = Get-TiaVersions $tiaRoot
-    Write-Step "$(if ($Check) { 'Check' } elseif ($Uninstall) { 'Uninstall' } else { 'Install' }) on $env:COMPUTERNAME, TIA: $(if ($versions) { ($versions | ForEach-Object { "V$_" }) -join ', ' } else { 'none' })"
+    $packageVersion = Get-PackageVersion
+    Write-Step "$(if ($Check) { 'Check' } elseif ($Uninstall) { 'Uninstall' } else { 'Install' })$(if ($packageVersion -and -not $Uninstall) { " $packageVersion" }) on $env:COMPUTERNAME, TIA:$(if ($versions) { ($versions | ForEach-Object { "V$_" }) -join ', ' } else { 'none' })"
 
     if ($Uninstall) {
         Uninstall-All $settings $versions $tiaRoot
@@ -424,6 +493,10 @@ try {
     Write-Config $settings
     Install-GiteaCa $settings
     Install-Tools
+    Save-Setup $settings
+    if ($installed -gt 0 -and $packageVersion -and -not $Check) {
+        Set-Content -LiteralPath (Join-Path $ConfigDir 'version.txt') -Value $packageVersion -Encoding ASCII
+    }
     Add-OpennessMembers $settings['OPENNESS_MEMBERS']
     Test-GiteaConnection $settings
 

@@ -145,6 +145,8 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 
 ### TIA V21, overené
 
+0.2.13, 2026-11-26, `update.cmd` cez SSH proti vývojovej Gitea 28.2.0 (súkromný repozitár s release, token iba na čítanie), add-in do testovacieho priečinka `ADDIN_DIR_V21`. Inštalácia uložila `setup\` iba pre správcov a token šifrovaný, `update.cmd` hlásil aktuálnu verziu, `-Check -Force` stiahol a overil balík, `-Version` funguje. `TS-UPD-01`, `02`, `03` (zlý aj chýbajúci hash), `04` pri bežiacej TIA, `06` sa ukázali správne. Pri zatvorenej TIA skutočný update z 0.2.12 na 0.2.13: add-in vymenený, `version.txt` 0.2.13, `update.ps1` obnovený, v `%TEMP%` nič neostalo. Potom proti **produkčnej Gitea**: inštalácia z USB s `GITEA_UPDATE_REPO=tiasbom/release` a tokenom účtu `tiasbom-update` (iba repository Read), `setup\` iba pre SYSTEM a správcov, token iba šifrovaný. `update.cmd` hlásil aktuálnu verziu, `update.cmd -Force` stiahol release v0.2.13 s overeným SHA256 a nainštaloval ho, kód 0. `tiasbom --check` `RESULT: OK`. Neoverené: aktivácia 0.2.13 v TIA, PC kolegu.
+
 0.2.12, 2026-11-19, pilot proti **produkčnej Gitea** cez HTTPS (`tls internal`, `REQUIRE_SIGNIN_VIEW=true`). Build `-Api V21 -AddIn` z ZIP vetvy, `install.cmd -EnvFile` s `ADDIN_SCOPE=corporate` a `GITEA_CA_CERT`:
 
 | Položka | Výsledok |
