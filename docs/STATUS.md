@@ -2,7 +2,7 @@
 
 **Posledná aktualizácia:** 2026-11-26
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
-**Verzia add-inu:** 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, bez exportu), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
+**Verzia add-inu:** 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, export do Gitea 2026-11-26), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
 **Verzia kódu:** `main` má 0.2.12, tag `v0.2.12`, na GitHube od 2026-11-26
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
@@ -44,7 +44,7 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 - Kontrola spojenia (`check.cmd`, inštalátor) berie 403 z produkčnej Gitea s `REQUIRE_SIGNIN_VIEW=true` ako dostupný server. Predtým by hlásila chybu. Overené na V21.
 - `GITEA_CA_CERT` v `tiasbom.env`: inštalátor pridá koreňovú CA Caddy do dôveryhodných na PC, kým nie je certifikát firemnej CA. Overené na V21, inštalátor kód 0, `check.cmd` `RESULT: OK` s osobným tokenom.
-- Export z TIA do produkčnej Gitea zatiaľ nebol, ani 0.2.12 na V17 až V20.
+- Export z TIA V21 do produkčnej Gitea overený 2026-11-26, commit v Gitea. 0.2.12 na V17 až V20 neoverená.
 - Add-in sa nemení správaním, verzia je zvýšená kvôli zmene `TiaSbom.Gitea`.
 
 ## Nové
@@ -96,7 +96,7 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 ## Ďalšie kroky
 
-1. Prvý export z TIA V21 do produkčnej Gitea s 0.2.12 na testovacom projekte. Vydanie 0.2.12 je v `main` bez neho, so súhlasom používateľa.
+1. Prvý export z TIA V21 do produkčnej Gitea: overený 2026-11-26. Ďalej príprava na TIA V21.1, pozri [07-testovanie-verzii.md](07-testovanie-verzii.md).
 2. Zálohy produkčnej Gitea a test obnovy. Stála adresa a certifikát firemnej CA podľa [04-produkcia.md](04-produkcia.md#adresa-servera).
 3. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
 4. Zmeniť autora add-inu `YourCompany` na názov firmy.
