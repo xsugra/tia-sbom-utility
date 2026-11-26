@@ -1,9 +1,9 @@
 # Stav projektu
 
-**Posledná aktualizácia:** 2026-11-19
+**Posledná aktualizácia:** 2026-11-26
 **Fáza:** vývoj, príprava nasadenia na 10 až 20 PC
 **Verzia add-inu:** 0.2.12 overená na V21 proti produkčnej Gitea (inštalácia, CA, `check.cmd`, bez exportu), na V17 až V20 neoverená. 0.2.11 je overená na V17, V18, V19, V20 a V21 (`Product/Version` v `AddInPublisherConfig.*.xml`)
-**Verzia kódu:** `main` má 0.2.11, na GitHube od 2026-11-19
+**Verzia kódu:** `main` má 0.2.12, tag `v0.2.12`, na GitHube od 2026-11-26
 
 > Tento súbor sa aktualizuje na konci každého chatu, v ktorom sa niečo zmenilo.
 
@@ -81,8 +81,8 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 | Vetva | Stav |
 |---|---|
-| `main` (lokálny aj GitHub) | 0.2.11, overená na V17 až V21, pushnutý 2026-11-19 |
-| `claude/tia-sbom-automation-testing-d1becd` | 0.2.12, pred `main`, pushnutá. Do `main` po súhlase |
+| `main` (lokálny aj GitHub) | 0.2.12, tag `v0.2.12`, pushnutý 2026-11-26. História na GitHube má od 2026-11 e-mail `noreply`, nové commity s ním |
+| `claude/tia-sbom-automation-testing-d1becd` | zlúčená do `main` |
 
 ## Prostredie
 
@@ -96,7 +96,7 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 
 ## Ďalšie kroky
 
-1. Prvý export z TIA V21 do produkčnej Gitea s 0.2.12 na testovacom projekte. Potom zlúčiť 0.2.12 do `main` a tag `v0.2.12`, so súhlasom.
+1. Prvý export z TIA V21 do produkčnej Gitea s 0.2.12 na testovacom projekte. Vydanie 0.2.12 je v `main` bez neho, so súhlasom používateľa.
 2. Zálohy produkčnej Gitea a test obnovy. Stála adresa a certifikát firemnej CA podľa [04-produkcia.md](04-produkcia.md#adresa-servera).
 3. Rozhodnúť o servisnom tokene verzus osobných tokenoch. Add-in sa nepodpisuje, rozhodnutie 2026-11-19.
 4. Zmeniť autora add-inu `YourCompany` na názov firmy.
@@ -111,3 +111,4 @@ Nájdené testami. Bez opravy by sa ukázali až u používateľov:
 | 2026-11-06 | Dokumentácia a pravidlá projektu, add-in overený na V19 |
 | 2026-11-06 | Atomický zápis a súbežné verzie overené na V19, 0.2.10-rc1 |
 | 2026-11-18 | Automatické testy, chybové kódy, inštalácia do CorporateAddIns, end-to-end test na V21 cez SSH, 0.2.11 |
+| 2026-11-19 | 0.2.12: produkčná Gitea cez HTTPS s `GITEA_CA_CERT`, inštalácia a `check.cmd` z V21 overené |
