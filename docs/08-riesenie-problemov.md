@@ -93,7 +93,10 @@ Výpis položiek:
 | `TS-NET-04`, staršie `An error occurred while sending the request` | Zlá adresa v `config.json`. Vo vývoji sa po reštarte laptopu mení adresa Default Switch. 2026-11-18 mali `portproxy`, prepínač a `config.json` vo VM tri rôzne adresy | [Adresa prepínača](03-gitea-server.md#zmena-adresy-prepínača), vo VM znova `install.cmd` alebo `update-vm.cmd` |
 | `TS-NET-02` | Port odmieta spojenie, Gitea nebeží | `docker compose ps` vo WSL |
 | `TS-NET-01` | DNS meno neexistuje | Opraviť `GITEA_BASE_URL` alebo DNS |
-| `TS-TLS-01` | Certifikát HTTPS nie je dôveryhodný | Nainštalovať firemnú CA. Vo vývoji `https://localhost` s `tls internal` |
+| `TS-TLS-01` | Certifikát HTTPS nie je dôveryhodný | Nainštalovať firemnú CA, dovtedy `GITEA_CA_CERT` podľa [09-instalacia.md](09-instalacia.md#certifikát-servera). Vo vývoji `https://localhost` s `tls internal` |
+| `check.cmd` alebo inštalátor hlási pri produkčnej Gitea chybu na kroku *Gitea server*, `HTTP 403` | Do 0.2.11: `REQUIRE_SIGNIN_VIEW=true`, `/api/v1/version` bez tokenu vracia 403 | Opravené v 0.2.12, krok hlási *version hidden because sign-in is required* |
+| Na PC s ESET je vydavateľ certifikátu *The original certificate provided by the server is untrusted* | ESET kontroluje HTTPS a pôvodnému certifikátu nedôveruje | Najprv `GITEA_CA_CERT`. Ak to nepomôže, výnimka pre adresu Gitea v ESET (rieši IT). Neoverené |
+| Koreňový certifikát sa nedá preniesť zo servera, RDP blokuje schránku, disky aj zápis na zdieľaný disk | Firemné nastavenie RDP a práv | Nahrať súbor cez prehliadač na serveri do dočasného súkromného repozitára Gitea, stiahnuť, overiť odtlačok, repozitár zmazať. Ručne prepísaný text mal chyby, pozri [09-instalacia.md](09-instalacia.md#certifikát-servera) |
 | Po `update-vm.cmd` chýba `C:\ProgramData\TiaSbom\check.cmd` | Do 2026-11-19 ho inštalátor kopíroval iba z balíka `package.ps1`, nie pri `-Build` | Opravené, inštalátor vezme zostavený `tiasbom.exe`. Dovtedy spustiť `tiasbom.exe --check` z `src\TiaSbom.Cli\bin\…\net48` |
 | Inštalátor skončí kódom 3 | Test spojenia zlyhal, kód je v `install.log` | Podľa kódu `TS-…` |
 | `check` hlásil `TS-AUTH-02` pri tokene podľa dokumentácie | Pred opravou volal `/user`, ktoré potrebuje `read:user` | Opravené, token sa overuje na zozname projektov |

@@ -67,8 +67,31 @@ Skopírujte `tiasbom.env.example` na `tiasbom.env` vedľa `install.ps1`. Súbor 
 | `ADDIN_SCOPE` | nie | `corporate`: V21 pre všetkých používateľov PC. Prázdne: priečinok používateľa, ktorý inštaluje |
 | `TIA_ROOT` | nie | Koreň inštalácie TIA |
 | `ADDIN_DIR_Vnn` | nie | Priečinok add-inu pre verziu, má prednosť pred `ADDIN_SCOPE` |
+| `GITEA_CA_CERT` | nie | Koreňový certifikát Gitea vedľa `tiasbom.env`, iba kým server nemá certifikát firemnej CA. Pozri [Certifikát servera](#certifikát-servera) |
 
 Zmena nastavenia: upravte `tiasbom.env` a znova spustite inštalátor.
+
+### Certifikát servera
+
+Kým produkčná Gitea používa vlastnú CA Caddy (`tls internal`), PC jej certifikátu nedôverujú a každý export skončí `TS-TLS-01`. Certifikát Caddy pre IP adresu platí 12 hodín a obnovuje sa sám, dôverovať treba jeho koreňovej CA (platí 10 rokov).
+
+1. Na serveri vo WSL uložte verejnú časť koreňovej CA. Meno kontajnera Caddy ukáže `docker ps`, so stackom z `gitea-server` je to `gitea-caddy-1`:
+   ```bash
+   docker exec gitea-caddy-1 cat /data/caddy/pki/authorities/local/root.crt > ~/gitea-root.crt
+   openssl x509 -in ~/gitea-root.crt -noout -subject -issuer -enddate -fingerprint -sha1
+   ```
+   `subject` a `issuer` musia byť rovnaké (`Caddy Local Authority … Root`).
+2. `gitea-root.crt` dajte vedľa `tiasbom.env` do chráneného priečinka. **Do Gitu nepatrí.** Súkromný kľúč `root.key` zo servera nikdy nekopírujte.
+   - Ak RDP na server neprenáša schránku ani disky, nahrajte súbor cez prehliadač na serveri do dočasného súkromného repozitára v Gitea, na PC ho stiahnite a repozitár zmažte.
+   - Text certifikátu neprepisujte ručne ani cez OCR. Prepísaná kópia mala chyby (`1` za `l`, `W` za `w`).
+   - Na každom PC overte odtlačok, kým súbor použijete: `(Get-PfxCertificate .\gitea-root.crt).Thumbprint` musí byť rovnaký ako `-fingerprint -sha1` z kroku 1, bez dvojbodiek.
+3. V `tiasbom.env` nastavte `GITEA_CA_CERT=gitea-root.crt` a spustite inštalátor.
+
+Inštalátor pridá iba tento jeden certifikát do *Trusted Root Certification Authorities* počítača a zapíše jeho odtlačok do `install.log` a `%ProgramData%\TiaSbom\gitea-ca.thumbprint`. Odmietne súbor so súkromným kľúčom, certifikát, ktorý nie je CA, aj medziľahlú CA. Pri zmene súboru starý certifikát nahradí, pri prázdnom `GITEA_CA_CERT` a pri `-Uninstall` ho odstráni. Certifikát, ktorému PC dôverovalo už predtým, nechá tak.
+
+Bezpečnosť: koreňovej CA Caddy potom PC dôverujú pre akúkoľvek adresu. Jej súkromný kľúč je na serveri, server preto chráňte. Keď IT dodá certifikát firemnej CA, nasaďte ho do Caddy, vyprázdnite `GITEA_CA_CERT` a spustite inštalátor znova.
+
+Overené 2026-11-19 na VM s TIA V21 proti produkčnej Gitea, 0.2.12: inštalátor pridal koreňovú CA (`Trusted Gitea CA …`), test spojenia hlásil dostupný server so skrytou verziou, kód 0. `check.cmd` s osobným tokenom `RESULT: OK`. Neoverené: správanie ESET pri kontrole HTTPS na PC, kde ESET beží, a odstránenie CA pri `-Uninstall` na skutočnom PC.
 
 Priečinky add-inu:
 
@@ -251,4 +274,5 @@ Get-Content "$env:ProgramData\TiaSbom\install.log" -Tail 15
 - Log neobsahuje hodnotu tokenu.
 - Inštalátor nemení firewall ani sieť.
 - `OPENNESS_MEMBERS` dáva členom prístup k TIA cez Openness, uvádzajte len nutné skupiny.
-- Produkčný `GITEA_BASE_URL` používa `https://`, inštalátor pri HTTP varuje. Firemná certifikačná autorita musí byť na PC dôveryhodná, inak `TS-TLS-01`.
+- Produkčný `GITEA_BASE_URL` používa `https://`, inštalátor pri HTTP varuje. Firemná certifikačná autorita musí byť na PC dôveryhodná, inak `TS-TLS-01`. Dočasne pomôže `GITEA_CA_CERT`.
+- `GITEA_CA_CERT` mení dôveryhodné certifikáty počítača. Nastavuje ho iba administrátor v chránenom `tiasbom.env`.

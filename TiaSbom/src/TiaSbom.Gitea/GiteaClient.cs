@@ -315,12 +315,20 @@ namespace TiaSbom.Gitea
             }
         }
 
+        /// <summary>A Gitea error answer: JSON with a "message". A proxy or login page answers with HTML instead.</summary>
+        private static bool IsGiteaMessage(string body)
+        {
+            try { return (Core.Json.Parse(body) as Dictionary<string, object>)?.Get("message") is string; }
+            catch (FormatException) { return false; }
+        }
+
         private GiteaException MissingOrganization(HttpStatusCode status) =>
             new GiteaException(status, $"Gitea: organization '{_settings.Owner}' not found or not visible.", GiteaProblem.MissingOrganization);
 
         /// <summary>
         /// Public endpoint, asked without the token: Gitea 28 answers 401 even here when a wrong token is sent, and the
         /// connection check must tell a network problem from a token problem.
+        /// Returns null when Gitea hides its version because sign-in is required.
         /// </summary>
         public async Task<string> GetServerVersionAsync()
         {
@@ -328,6 +336,13 @@ namespace TiaSbom.Gitea
             using (var anonymous = new HttpClient { BaseAddress = _http.BaseAddress, Timeout = _http.Timeout })
             using (var response = await anonymous.GetAsync("version").ConfigureAwait(false))
             {
+                // With REQUIRE_SIGNIN_VIEW=true Gitea answers 403 {"message":"Only signed in user..."} without a token.
+                // That is still Gitea, so the server counts as reachable; the token step checks the rest.
+                if (response.StatusCode == HttpStatusCode.Forbidden || response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    if (IsGiteaMessage(body)) return null;
+                }
                 if (!response.IsSuccessStatusCode) await ThrowAsync(response, "GET version").ConfigureAwait(false);
                 text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             }

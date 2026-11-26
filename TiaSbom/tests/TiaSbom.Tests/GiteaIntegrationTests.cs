@@ -287,6 +287,30 @@ namespace TiaSbom.Tests
             }
         }
 
+        /// <summary>Found on the production server: REQUIRE_SIGNIN_VIEW=true makes /version answer 403 without a token.</summary>
+        [Fact]
+        public async Task Server_that_requires_sign_in_counts_as_reachable()
+        {
+            using (FakeServer server = FakeServer.Answer(403, "{\"message\":\"Only signed in user is allowed to call APIs.\"}"))
+            {
+                List<CheckStep> steps = await ConnectionCheck.RunAsync(
+                    () => new GiteaSettings { BaseUrl = server.Url, Owner = "sbom" }, () => null);
+                Assert.True(steps[2].Ok, steps[2].Detail);
+                Assert.Contains("sign-in is required", steps[2].Detail);
+            }
+        }
+
+        [Fact]
+        public async Task Html_403_is_not_taken_for_Gitea()
+        {
+            using (FakeServer server = FakeServer.Answer(403, "<html><body>Forbidden</body></html>", "text/html"))
+            {
+                List<CheckStep> steps = await ConnectionCheck.RunAsync(
+                    () => new GiteaSettings { BaseUrl = server.Url, Owner = "sbom" }, () => null);
+                Assert.False(steps[2].Ok);
+            }
+        }
+
         [Fact]
         public async Task Missing_configuration_stops_at_once()
         {
