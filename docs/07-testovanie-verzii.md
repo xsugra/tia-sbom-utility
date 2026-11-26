@@ -154,7 +154,8 @@ Skopírujte pre každú testovanú verziu do jej sekcie.
 | Test spojenia | *Gitea reachable …, version hidden because sign-in is required* |
 | `tiasbom --login`, `check.cmd` | osobný token, všetky kroky OK, `RESULT: OK`, organizácia `sbom` prázdna |
 | TIA | add-in aktivovaný, v kontextovom menu projektu je |
-| Neoverené | export do produkčnej Gitea (zámerne zatiaľ nie), ESET na PC |
+| Export | 2026-11-26 overený používateľom, commit v produkčnej Gitea |
+| Neoverené | ESET na PC |
 
 0.2.11, 2026-11-18, automatizovaný test cez SSH a interaktívnu plochu VM. Postup je v [12-automaticke-testy.md](12-automaticke-testy.md), screenshoty v [príručke](10-pouzivatelska-prirucka.md).
 
@@ -237,6 +238,22 @@ Pozornosť: `Device.UnpluggedItems` je od V19 dokumentované.
 ### TIA V20
 
 0.2.11, 2026-11-19, `update-vm.cmd` z vetvy: inštalácia do `Portal V20\AddIns`, `check.cmd` a test spojenia OK, `fullTrust=False`. Podľa `addin.log` sa ukázal dialóg čísla zákazky, okno „already stored“ a `TS-NET-04` (port 3999), žiadna `SecurityException`. Neoverené: nový zápis verzie s 0.2.11, `TS-AUTH-01`. 0.2.10 z 2026-11-12 zapísala novú verziu. Prvý build 2026-11-06 zlyhal, opakovaný prešiel, príčina nie je zapísaná.
+
+### TIA V21.1, pripravené, neoverené
+
+Siemens označuje V21.1 za pokračovanie línie V21, na stiahnutie koncom novembra 2026 ([tlačová správa](https://press.siemens.com/global/en/pressrelease/continuous-access-new-software-siemens-ends-project-upgrades-tia-portal-within-v21)). Openness Resolver od Siemens použije pre aplikáciu zostavenú proti V21 assembly V21 z inštalácie V21.1 ([NuGet](https://www.nuget.org/packages/Siemens.Collaboration.Net.TiaPortal.Openness.Resolver)). Priečinok, názov API ani správanie add-inov Siemens neuvádza.
+
+Rozhodnutie 2026-11-26: najprv otestovať existujúci build V21 na V21.1, kód zatiaľ nemeniť. Zostaviť na V21.1 iba vtedy, keď build V21 na V21.1 nefunguje. Jeden balík pre V21 aj V21.1 zjednoduší prechodné obdobie, keď budú vo firme obe.
+
+Riziko: `install.ps1` pozná iba priečinok `Portal V<číslo>`. Ak bude V21.1 v `Portal V21.1`, inštalátor ho preskočí a skončí kódom 0. Opraviť po zistení skutočného priečinka.
+
+Test na VM s V21:
+
+1. Nainštalovať V21.1. Zapísať priečinok v `C:\Program Files\Siemens\Automation\`, podkľúče `HKLM\SOFTWARE\Siemens\Automation\Openness` a obsah `PublicAPI`.
+2. Ponúkne TIA nainštalovaný add-in 0.2.12? Treba ho znova aktivovať?
+3. Otvoriť projekt z V21: žiada upgrade, aká je potom prípona?
+4. Export do Gitea, verzia TIA zapísaná v SBOM.
+5. Na VM iba s V21.1: `install.cmd -Check`.
 
 ### TIA V16
 
